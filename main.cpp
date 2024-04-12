@@ -674,7 +674,7 @@ int main( int argc, char* argv[] )
   initFilm();
   resetFilm();
   clearRayTracedResult();
-  loadObj( "box3.obj", g_Obj );
+  loadObj( "../obj/box3.obj", g_Obj );
   
   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
   
