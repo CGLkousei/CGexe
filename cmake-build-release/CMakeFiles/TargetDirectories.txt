@@ -1,3 +1,0 @@
-C:/Users/a5820/CLionProjects/No10/cmake-build-release/CMakeFiles/No10.dir
-C:/Users/a5820/CLionProjects/No10/cmake-build-release/CMakeFiles/edit_cache.dir
-C:/Users/a5820/CLionProjects/No10/cmake-build-release/CMakeFiles/rebuild_cache.dir

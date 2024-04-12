@@ -1,4 +1,4 @@
-"C:\Program Files\JetBrains\CLion 2023.1.3\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2023.1.3/bin/ninja/win/x64/ninja.exe" -DCMAKE_TOOLCHAIN_FILE=C:\Users\a5820\.clion-vcpkg\vcpkg\scripts\buildsystems\vcpkg.cmake -G Ninja -S C:\Users\a5820\CLionProjects\No10 -B C:\Users\a5820\CLionProjects\No10\cmake-build-release
+"C:\Program Files\JetBrains\CLion 2023.1.3\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2023.1.3/bin/ninja/win/x64/ninja.exe" -G Ninja "-DCMAKE_TOOLCHAIN_FILE=C:\Users\kouse\.clion-vcpkg\vcpkg (1)\scripts\buildsystems\vcpkg.cmake" -S C:\Users\kouse\CLionProjects\CGexe -B C:\Users\kouse\CLionProjects\CGexe\cmake-build-release
 -- The C compiler identification is MSVC 19.36.32534.0
 -- The CXX compiler identification is MSVC 19.36.32534.0
 -- Detecting C compiler ABI info
@@ -13,7 +13,20 @@
 -- Detecting CXX compile features - done
 -- Found OpenGL: opengl32   
 OPENGL: opengl32;glu32
--- Found JPEG: optimized;C:/Users/a5820/.clion-vcpkg/vcpkg/installed/x86-windows/lib/jpeg.lib;debug;C:/Users/a5820/.clion-vcpkg/vcpkg/installed/x86-windows/debug/lib/jpeg.lib (found version "62") 
--- Configuring done
--- Generating done
--- Build files have been written to: C:/Users/a5820/CLionProjects/No10/cmake-build-release
+CMake Error at C:/Users/kouse/.clion-vcpkg/vcpkg (1)/scripts/buildsystems/vcpkg.cmake:859 (_find_package):
+  Could not find a package configuration file provided by "FreeGLUT" with any
+  of the following names:
+
+    FreeGLUTConfig.cmake
+    freeglut-config.cmake
+
+  Add the installation prefix of "FreeGLUT" to CMAKE_PREFIX_PATH or set
+  "FreeGLUT_DIR" to a directory containing one of the above files.  If
+  "FreeGLUT" provides a separate development package or SDK, be sure it has
+  been installed.
+Call Stack (most recent call first):
+  CMakeLists.txt:30 (find_package)
+
+
+-- Configuring incomplete, errors occurred!
+See also "C:/Users/kouse/CLionProjects/CGexe/cmake-build-release/CMakeFiles/CMakeOutput.log".

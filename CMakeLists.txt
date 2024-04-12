@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.25)
-project(No10)
+project(CGexe)
 
 set(CMAKE_CXX_STANDARD 14)
 
 include_directories(.)
 
-add_executable(No10
+add_executable(CGexe
         Camera.cpp
         Camera.h
         GLPreview.cpp
@@ -21,14 +21,14 @@ add_executable(No10
         TriMesh.h)
 
 find_package(Eigen3 CONFIG REQUIRED)
-target_link_libraries(No10 PUBLIC Eigen3::Eigen)
+target_link_libraries(CGexe PUBLIC Eigen3::Eigen)
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(No10 PUBLIC ${OPENGL_LIBRARIES})
+target_link_libraries(CGexe PUBLIC ${OPENGL_LIBRARIES})
 message("OPENGL: ${OPENGL_LIBRARIES}")
 
 find_package(FreeGLUT CONFIG REQUIRED)
-target_link_libraries(No10 PUBLIC $<IF:$<TARGET_EXISTS:FreeGLUT::freeglut>,FreeGLUT::freeglut,FreeGLUT::freeglut_static>)
+target_link_libraries(CGexe PUBLIC $<IF:$<TARGET_EXISTS:FreeGLUT::freeglut>,FreeGLUT::freeglut,FreeGLUT::freeglut_static>)
 
 find_package(JPEG REQUIRED)
-target_link_libraries(No10 PUBLIC JPEG::JPEG)
+target_link_libraries(CGexe PUBLIC JPEG::JPEG)
