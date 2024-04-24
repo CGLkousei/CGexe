@@ -667,9 +667,6 @@ int main( int argc, char* argv[] )
   glutDisplayFunc( display );
   glutIdleFunc( idle );
   glutReshapeFunc( resize );
-//  glutMouseFunc( mouse );
-//  glutMotionFunc( mouseDrag );
-  glutKeyboardFunc( key );
   
   initFilm();
   resetFilm();

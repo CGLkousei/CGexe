@@ -59,6 +59,45 @@ bool readJpegData( JpegData& out_JpegData, const char* in_FileName )
   return true;
 }
 
+bool writeJpegData( const float* in_FilmBuffer, const char* out_FileName, const int width, const int height, const int ch, const int quality ){
+    struct jpeg_compress_struct cinfo;
+    jpeg_create_compress( &cinfo );
+
+    struct jpeg_error_mgr jerr;
+    cinfo.err = jpeg_std_error( &jerr );
+
+    FILE *fp = fopen( out_FileName, "wb" );
+    if (fp == NULL) {
+        printf( "Error: failed to open %s\n", out_FileName );
+        return false;
+    }
+
+    jpeg_stdio_dest( &cinfo, fp );
+
+    cinfo.image_width = width;
+    cinfo.image_height = height;
+    cinfo.input_components = ch;
+    cinfo.in_color_space = JCS_RGB;
+
+    jpeg_set_defaults( &cinfo );
+    jpeg_set_quality( &cinfo, quality, TRUE );
+    jpeg_start_compress( &cinfo, TRUE );
+
+    uint8_t  *row;
+    const uint32_t stride = width * ch;
+    for ( int y = 0; y < height ; y++ )
+    {
+        //ここに追記の必要あり
+        jpeg_write_scanlines( &cinfo, &row, 1 );
+    }
+
+    jpeg_finish_compress( &cinfo );
+    jpeg_destroy_compress( &cinfo );
+    fclose( fp );
+
+    return true;
+}
+
 void finalizeJpegData( JpegData& io_JpegData )
 {
   if ( io_JpegData.data != nullptr )

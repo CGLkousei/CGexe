@@ -26,6 +26,7 @@ struct JpegData
 };
 
 bool readJpegData( JpegData& out_JpegData, const char* in_FileName );
+bool writeJpegData( const float* in_FilmBuffer, const char* out_FileName, const int width, const int height, const int ch );
 void finalizeJpegData( JpegData& io_JpegData );
 
 #endif /* Jpeg_h */
