@@ -9,6 +9,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
+#include <cmath>
+#include <algorithm>
 #include "Jpeg.h"
 
 // based on
@@ -60,6 +62,12 @@ bool readJpegData( JpegData& out_JpegData, const char* in_FileName )
 }
 
 bool writeJpegData( const float* in_FilmBuffer, const char* out_FileName, const int width, const int height, const int ch, const int quality ){
+    uint8_t *data = (uint8_t*)malloc( sizeof(uint8_t) * width * height * ch);
+    for(int i = 0; i < width * height * ch; i++)
+    {
+        data[i] = static_cast<uint8_t>( std::round( std::max( 0.0f, std::min( 255.0f, in_FilmBuffer[i]) ) ) );
+    }
+
     struct jpeg_compress_struct cinfo;
     jpeg_create_compress( &cinfo );
 
@@ -83,12 +91,12 @@ bool writeJpegData( const float* in_FilmBuffer, const char* out_FileName, const 
     jpeg_set_quality( &cinfo, quality, TRUE );
     jpeg_start_compress( &cinfo, TRUE );
 
-    uint8_t  *row;
+    uint8_t  *row = data;
     const uint32_t stride = width * ch;
     for ( int y = 0; y < height ; y++ )
     {
-        //ここに追記の必要あり
         jpeg_write_scanlines( &cinfo, &row, 1 );
+        row += stride;
     }
 
     jpeg_finish_compress( &cinfo );
