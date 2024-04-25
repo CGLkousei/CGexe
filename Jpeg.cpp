@@ -102,6 +102,7 @@ bool writeJpegData( const float* in_FilmBuffer, const char* out_FileName, const 
     jpeg_finish_compress( &cinfo );
     jpeg_destroy_compress( &cinfo );
     fclose( fp );
+    memset( data, 0, sizeof(uint8_t) * width * height * ch );
 
     return true;
 }

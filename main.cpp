@@ -106,7 +106,7 @@ void initAreaLights()
   light2.arm_v.normalize();
   light2.arm_u = light2.arm_u * 0.3;
   light2.arm_v = light2.arm_v * 0.2;
-  
+
   //light2.color << 0.3, 0.3, 1.0;
   light2.color << 1.0, 1.0, 1.0;
   //light2.intensity = 64.0;
@@ -532,6 +532,15 @@ void shadeNextPixel()
   g_AccumulationBuffer[pixel_flat_idx*3+1] += I.y();
   g_AccumulationBuffer[pixel_flat_idx*3+2] += I.z();
   g_CountBuffer[pixel_flat_idx] += nSamplesPerPixel;
+}
+
+void Rendering(const unsigned int smaples)
+{
+    stepToNextPixel( g_RayTracingInternalData );
+
+    const int pixel_flat_idx = g_RayTracingInternalData.nextPixel_j * g_FilmWidth + g_RayTracingInternalData.nextPixel_i;
+
+    Eigen::Vector3d I = Eigen::Vector3d::Zero();
 }
 
 void idle()
