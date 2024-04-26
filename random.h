@@ -15,9 +15,11 @@
 extern "C" {
 #endif
 
-extern void	     seedMT  (uint32_t seed);
-extern float    randomMT(void);
-extern uint32_t		randomMT_i(void);
+extern void seedMT(uint32_t seed);
+
+extern float randomMT(void);
+
+extern uint32_t randomMT_i(void);
 
 //extern void      random_uniform_vector(ri_vector_t *dst);
 

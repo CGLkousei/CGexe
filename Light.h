@@ -14,15 +14,13 @@
 
 #include <Eigen/Dense>
 
-struct AreaLight
-{
-  Eigen::Vector3d pos;
-  Eigen::Vector3d arm_u;
-  Eigen::Vector3d arm_v;
-  Eigen::Vector3d color;
-  double intensity;
+struct AreaLight {
+    Eigen::Vector3d pos;
+    Eigen::Vector3d arm_u;
+    Eigen::Vector3d arm_v;
+    Eigen::Vector3d color;
+    double intensity;
 };
-
 
 
 #endif /* Light_h */
