@@ -214,16 +214,15 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
             material.eta = eta;
         }
 
-        if ()
 
-            if (strncmp(line, "map_Kd", 6) == 0) {
-                sscanf(line, "map_Kd %s", texture_name);
+        if (strncmp(line, "map_Kd", 6) == 0) {
+            sscanf(line, "map_Kd %s", texture_name);
 
-                if (strlen(texture_name) == 0)
-                    continue;
+            if (strlen(texture_name) == 0)
+                continue;
 
-                material.texture_name = texture_name;
-            }
+            material.texture_name = texture_name;
+        }
 
     }
 
