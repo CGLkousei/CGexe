@@ -679,7 +679,7 @@ int main(int argc, char *argv[]) {
     initFilm();
     resetFilm();
     clearRayTracedResult();
-    loadObj("../obj/default.obj", g_Obj);
+    loadObj("../obj/room.obj", g_Obj);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
