@@ -142,7 +142,8 @@ void updateFilm() {
             g_FilmBuffer[i * 3] = g_AccumulationBuffer[i * 3] / g_CountBuffer[i];
             g_FilmBuffer[i * 3 + 1] = g_AccumulationBuffer[i * 3 + 1] / g_CountBuffer[i];
             g_FilmBuffer[i * 3 + 2] = g_AccumulationBuffer[i * 3 + 2] / g_CountBuffer[i];
-        } else {
+        }
+        else {
             g_FilmBuffer[i * 3] = 0.0;
             g_FilmBuffer[i * 3 + 1] = 0.0;
             g_FilmBuffer[i * 3 + 2] = 0.0;
@@ -438,7 +439,8 @@ computeRefraction(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, cons
     const double inside_sqrt = 1.0 - eta * eta * (1.0 - e_dot_n * e_dot_n);
     if (inside_sqrt < 0.0) {
         return computeReflection(in_x, in_n, in_w_eye, in_ray_hit, in_Object, in_Material, in_AreaLights, depth);
-    } else {
+    }
+    else {
         Eigen::Vector3d w_t = -in_n * sqrt(inside_sqrt) - eta * (in_w_eye - e_dot_n * in_n);
         w_t.normalize();
 
@@ -493,11 +495,13 @@ Eigen::Vector3d computeShading(const Ray &in_Ray, const RayHit &in_RayHit, const
                 computeDiffuseReflection(x, n, -in_Ray.d, in_RayHit, in_Object,
                                          in_Object.meshes[in_RayHit.mesh_idx].material, in_AreaLights, in_Ray.depth)) /
              kd_max;
-    } else if (r < kd_max + ks_max) {
+    }
+    else if (r < kd_max + ks_max) {
         I += in_Object.meshes[in_RayHit.mesh_idx].material.ks.cwiseProduct(
                 computeReflection(x, n, -in_Ray.d, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material,
                                   in_AreaLights, in_Ray.depth)) / ks_max;
-    } else if (r < kd_max + ks_max + kt_max) {
+    }
+    else if (r < kd_max + ks_max + kt_max) {
         I += in_Object.meshes[in_RayHit.mesh_idx].material.kt.cwiseProduct(
                 computeRefraction(x, n, -in_Ray.d, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material,
                                   in_AreaLights, in_Ray.depth)) / kt_max;
@@ -576,7 +580,8 @@ void mouseDrag(int x, int y) {
         resetFilm();
         updateFilm();
         glutPostRedisplay();
-    } else if (g_MouseMode == MM_LIGHT && g_MM_LIGHT_idx < g_AreaLights.size()) {
+    }
+    else if (g_MouseMode == MM_LIGHT && g_MM_LIGHT_idx < g_AreaLights.size()) {
         double scale = 1.0;
 
         g_AreaLights[g_MM_LIGHT_idx].pos += dx * scale * g_Camera.getXVector() + dy * scale * g_Camera.getYVector();

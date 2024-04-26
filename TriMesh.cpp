@@ -192,12 +192,14 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
                 sscanf(line, "Kd %f %f %f", &r, &g, &b);
 
                 material.kd << r, g, b;
-            } else if (line[1] == 's') {
+            }
+            else if (line[1] == 's') {
                 float r, g, b;
                 sscanf(line, "Ks %f %f %f", &r, &g, &b);
 
                 material.ks << r, g, b;
-            } else if (line[1] == 't') {
+            }
+            else if (line[1] == 't') {
                 float r, g, b;
                 sscanf(line, "Kt %f %f %f", &r, &g, &b);
 
@@ -212,14 +214,16 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
             material.eta = eta;
         }
 
-        if (strncmp(line, "map_Kd", 6) == 0) {
-            sscanf(line, "map_Kd %s", texture_name);
+        if ()
 
-            if (strlen(texture_name) == 0)
-                continue;
+            if (strncmp(line, "map_Kd", 6) == 0) {
+                sscanf(line, "map_Kd %s", texture_name);
 
-            material.texture_name = texture_name;
-        }
+                if (strlen(texture_name) == 0)
+                    continue;
+
+                material.texture_name = texture_name;
+            }
 
     }
 
@@ -439,10 +443,12 @@ bool loadObj(const std::string &in_filename, Object &out_object) {
             if (internal_materials[internal_triangles[i].material_id].texture_name.length() > 0) {
                 mesh.material.texture = prepareTextureFromJpegFile(
                         internal_materials[internal_triangles[i].material_id].texture_name.c_str());
-            } else {
+            }
+            else {
                 mesh.material.texture = 0;
             }
-        } else {
+        }
+        else {
             mesh.material.kd << 1.0, 1.0, 1.0;
             mesh.material.ks << 0.0, 0.0, 0.0;
             mesh.material.kt << 0.0, 0.0, 0.0;
