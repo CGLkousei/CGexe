@@ -33,9 +33,10 @@ struct InternalTriangles {
 struct InternalMaterial {
     std::string material_name;
     std::string texture_name;
-    Eigen::Vector3d kd;
-    Eigen::Vector3d ks;
-    Eigen::Vector3d kt;
+    Eigen::Vector3d color;
+    float kd;
+    float ks;
+    float kt;
 
     double eta;
 
@@ -67,8 +68,10 @@ void resetInternalTriangles(InternalTriangles &io_triangles) {
 
 void resetMaterial(Material &io_Material) {
     io_Material.texture = 0;
-    io_Material.kd << 0.0, 0.0, 0.0;
-    io_Material.ks << 0.0, 0.0, 0.0;
+    io_Material.color = Eigen::Vector3d::Zero();
+    io_Material.kd = 0.0;
+    io_Material.ks = 0.0;
+    io_Material.kt = 0.0;
 }
 
 void resetMesh(TriMesh &io_Mesh) {
@@ -177,9 +180,10 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
 
             material.material_name = material_name;
             material.texture_name = "";
-            material.kd << 1.0, 1.0, 1.0;
-            material.ks << 0.0, 0.0, 0.0;
-            material.kt << 0.0, 0.0, 0.0;
+            material.color << 1.0, 1.0, 1.0;
+            material.kd = 0.8;
+            material.ks = 0.0;
+            material.kt = 0.0;
             material.eta = 1.0;
             material.valid = true;
         }
@@ -191,19 +195,19 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
                 float r, g, b;
                 sscanf(line, "Kd %f %f %f", &r, &g, &b);
 
-                material.kd << r, g, b;
+                material.color << r, g, b;
             }
             else if (line[1] == 's') {
                 float r, g, b;
                 sscanf(line, "Ks %f %f %f", &r, &g, &b);
 
-                material.ks << r, g, b;
+                material.ks = r;
             }
             else if (line[1] == 't') {
                 float r, g, b;
                 sscanf(line, "Kt %f %f %f", &r, &g, &b);
 
-                material.kt << r, g, b;
+                material.kt = r;
             }
         }
 
@@ -218,7 +222,14 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
             float Kt;
             sscanf(line, "d %f", &Kt);
 
-            material.kt << Kt, Kt, Kt;
+            material.kt = Kt;
+        }
+
+        if (strncmp(line, "Pr", 2) == 0) {
+            float Pr;
+            sscanf(line, "Pr %f", &Pr);
+
+            material.kd = Pr;
         }
 
         if (strncmp(line, "map_Kd", 6) == 0) {
@@ -440,6 +451,7 @@ bool loadObj(const std::string &in_filename, Object &out_object) {
         // If valid, also read the texture.
 
         if (internal_triangles[i].material_id >= 0) {
+            mesh.material.color = internal_materials[internal_triangles[i].material_id].color;
             mesh.material.kd = internal_materials[internal_triangles[i].material_id].kd;
             mesh.material.ks = internal_materials[internal_triangles[i].material_id].ks;
             mesh.material.kt = internal_materials[internal_triangles[i].material_id].kt;
@@ -454,9 +466,10 @@ bool loadObj(const std::string &in_filename, Object &out_object) {
             }
         }
         else {
-            mesh.material.kd << 1.0, 1.0, 1.0;
-            mesh.material.ks << 0.0, 0.0, 0.0;
-            mesh.material.kt << 0.0, 0.0, 0.0;
+            mesh.material.color << 0.8, 0.8, 0.8;
+            mesh.material.kd = 1.0;
+            mesh.material.ks = 0.0;
+            mesh.material.kt = 0.0;
             mesh.material.eta = 1.0;
             mesh.material.texture = 0;
         }
@@ -492,4 +505,14 @@ void resizeObj(Object &io_object, const Eigen::Vector3d &in_min, const Eigen::Ve
             io_object.meshes[i].vertices[j] = (io_object.meshes[i].vertices[j] - obj_center) * scale + region_center;
         }
     }
+}
+
+Eigen::Vector3d Material::getKd() const {
+    return kd * color;
+}
+Eigen::Vector3d Material::getKs() const{
+    return ks * color;
+}
+Eigen::Vector3d Material::getKt() const{
+    return kt * color;
 }

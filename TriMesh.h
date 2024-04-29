@@ -25,13 +25,17 @@
 
 #include <Eigen/Core>
 #include <vector>
-
 struct Material {
     GLuint texture;
-    Eigen::Vector3d kd;
-    Eigen::Vector3d ks;
-    Eigen::Vector3d kt;
+    Eigen::Vector3d color;
+    float kd;
+    float ks;
+    float kt;
     double eta;
+
+    Eigen::Vector3d getKd() const;
+    Eigen::Vector3d getKs() const;
+    Eigen::Vector3d getKt() const;
 };
 
 struct TriMesh {

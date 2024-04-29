@@ -197,7 +197,7 @@ Eigen::Vector3d computeGLDirectShading(const Eigen::Vector3d &x, const Eigen::Ve
         L.normalize();
         const double cos_theta = std::max<double>(0.0, L.dot(n));
 
-        I += lights[i].color.cwiseProduct(material.kd) * lights[i].intensity * cos_theta / (dist * dist);
+        I += lights[i].color.cwiseProduct(material.getKd()) * lights[i].intensity * cos_theta / (dist * dist);
     }
 
     return I;

@@ -336,7 +336,7 @@ Eigen::Vector3d computeDirectLighting(const std::vector<AreaLight> &in_AreaLight
             // diffuse
             const double cos_theta = std::max<double>(0.0, w_L.dot(in_n));
             direct_light_contribution +=
-                    area * in_AreaLights[i].color.cwiseProduct(in_Material.kd) * in_AreaLights[i].intensity *
+                    area * in_AreaLights[i].color.cwiseProduct(in_Material.getKd()) * in_AreaLights[i].intensity *
                     cos_theta * cosT_l / (M_PI * dist * dist);
         }
     }
@@ -479,32 +479,31 @@ Eigen::Vector3d computeShading(const Ray &in_Ray, const RayHit &in_RayHit, const
 
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
 
-    const double kd_max = in_Object.meshes[in_RayHit.mesh_idx].material.kd.maxCoeff();
-    const double ks_max = in_Object.meshes[in_RayHit.mesh_idx].material.ks.maxCoeff();
-    const double kt_max = in_Object.meshes[in_RayHit.mesh_idx].material.kt.maxCoeff();
+    const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
+    const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
+    const double kt = in_Object.meshes[in_RayHit.mesh_idx].material.kt;
 
-    if (kd_max > 0.0) {
+    if (kd > 0.0) {
         I += computeDirectLighting(in_AreaLights, x, n, -in_Ray.d, in_RayHit, in_Object,
                                    in_Object.meshes[in_RayHit.mesh_idx].material, in_Ray.depth);
     }
 
     const double r = randomMT();
 
-    if (r < kd_max) {
-        I += in_Object.meshes[in_RayHit.mesh_idx].material.kd.cwiseProduct(
+    if (r < kd) {
+        I += in_Object.meshes[in_RayHit.mesh_idx].material.getKd().cwiseProduct(
                 computeDiffuseReflection(x, n, -in_Ray.d, in_RayHit, in_Object,
-                                         in_Object.meshes[in_RayHit.mesh_idx].material, in_AreaLights, in_Ray.depth)) /
-             kd_max;
+                                         in_Object.meshes[in_RayHit.mesh_idx].material, in_AreaLights, in_Ray.depth)) / kd;
     }
-    else if (r < kd_max + ks_max) {
-        I += in_Object.meshes[in_RayHit.mesh_idx].material.ks.cwiseProduct(
+    else if (r < kd + ks) {
+        I += in_Object.meshes[in_RayHit.mesh_idx].material.getKs().cwiseProduct(
                 computeReflection(x, n, -in_Ray.d, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material,
-                                  in_AreaLights, in_Ray.depth)) / ks_max;
+                                  in_AreaLights, in_Ray.depth)) / ks;
     }
-    else if (r < kd_max + ks_max + kt_max) {
-        I += in_Object.meshes[in_RayHit.mesh_idx].material.kt.cwiseProduct(
+    else if (r < kd + ks + kt) {
+        I += in_Object.meshes[in_RayHit.mesh_idx].material.getKt().cwiseProduct(
                 computeRefraction(x, n, -in_Ray.d, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material,
-                                  in_AreaLights, in_Ray.depth)) / kt_max;
+                                  in_AreaLights, in_Ray.depth)) / kt;
     }
 
     return I;
@@ -675,11 +674,18 @@ int main(int argc, char *argv[]) {
     glutDisplayFunc(display);
     glutIdleFunc(idle);
     glutReshapeFunc(resize);
+    glutMouseFunc( mouse );
+    glutMotionFunc( mouseDrag );
+    glutKeyboardFunc( key );
 
     initFilm();
     resetFilm();
     clearRayTracedResult();
     loadObj("../obj/room.obj", g_Obj);
+
+    for(int i=0; i<g_Obj.meshes.size(); i++){
+        std::cout << g_Obj.meshes[i].material.color.transpose() << std::endl;
+    }
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
