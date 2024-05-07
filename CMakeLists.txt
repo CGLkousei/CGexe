@@ -18,10 +18,11 @@ add_executable(CGexe
         random.c
         random.h
         TriMesh.cpp
-        TriMesh.h)
+        TriMesh.h
+)
 
 find_package(Eigen3 CONFIG REQUIRED)
-target_link_libraries(CGexe PUBLIC Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} PUBLIC Eigen3::Eigen)
 
 find_package(OpenGL REQUIRED)
 target_link_libraries(CGexe PUBLIC ${OPENGL_LIBRARIES})
