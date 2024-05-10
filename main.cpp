@@ -29,9 +29,9 @@
 #include "Camera.h"
 #include "Jpeg.h"
 #include "TriMesh.h"
-
 #include "GLPreview.h"
 #include "random.h"
+#include "Image.h"
 
 enum MouseMode {
     MM_CAMERA,
@@ -116,6 +116,17 @@ void initAreaLights() {
     g_AreaLights.push_back(light2);
 }
 
+void convertBuffer(const float* film_buffer, Color* pixels){
+    for (int y = 0; y < g_FilmHeight; y++) {
+        for (int x = 0; x < g_FilmWidth; x++) {
+            const int index = y * g_FilmWidth + x;
+            pixels[index].x() = film_buffer[index * 3];
+            pixels[index].y() = film_buffer[index * 3 + 1];
+            pixels[index].z() = film_buffer[index * 3 + 2];
+        }
+    }
+}
+
 void resetFilm() {
     memset(g_AccumulationBuffer, 0, sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
     memset(g_CountBuffer, 0, sizeof(int) * g_FilmWidth * g_FilmHeight);
@@ -136,7 +147,7 @@ void initFilm() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
-void updateFilm() {
+void updateFilm(const unsigned int samples) {
     for (int i = 0; i < g_FilmWidth * g_FilmHeight; i++) {
         if (g_CountBuffer[i] > 0) {
             g_FilmBuffer[i * 3] = g_AccumulationBuffer[i * 3] / g_CountBuffer[i];
@@ -148,6 +159,13 @@ void updateFilm() {
             g_FilmBuffer[i * 3 + 1] = 0.0;
             g_FilmBuffer[i * 3 + 2] = 0.0;
         }
+    }
+
+    std::cout << "count: " << g_CountBuffer[0] << std::endl;
+    if (g_CountBuffer[0] == (samples + 1)) {
+        Image image(g_FilmWidth, g_FilmHeight);
+        convertBuffer(g_FilmBuffer, image.pixels);
+        image.save("sample");
     }
 
     glBindTexture(GL_TEXTURE_2D, g_FilmTexture);
@@ -559,7 +577,7 @@ void idle() {
 #endif
 
     for (int i = 0; i < g_FilmWidth * g_FilmHeight; i++) shadeNextPixel();
-    updateFilm();
+    updateFilm(3);
 
     glutPostRedisplay();
 }
@@ -577,7 +595,7 @@ void mouseDrag(int x, int y) {
 
         g_Camera.rotateCameraInLocalFrameFixLookAt(dx * scale);
         resetFilm();
-        updateFilm();
+        updateFilm(100);
         glutPostRedisplay();
     }
     else if (g_MouseMode == MM_LIGHT && g_MM_LIGHT_idx < g_AreaLights.size()) {
@@ -585,7 +603,7 @@ void mouseDrag(int x, int y) {
 
         g_AreaLights[g_MM_LIGHT_idx].pos += dx * scale * g_Camera.getXVector() + dy * scale * g_Camera.getYVector();
         resetFilm();
-        updateFilm();
+        updateFilm(100);
         glutPostRedisplay();
     }
 }
@@ -681,11 +699,7 @@ int main(int argc, char *argv[]) {
     initFilm();
     resetFilm();
     clearRayTracedResult();
-    loadObj("../obj/room.obj", g_Obj);
-
-    for(int i=0; i<g_Obj.meshes.size(); i++){
-        std::cout << g_Obj.meshes[i].material.color.transpose() << std::endl;
-    }
+    loadObj("../obj/room3.obj", g_Obj);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
