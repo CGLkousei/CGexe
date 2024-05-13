@@ -577,7 +577,7 @@ void idle() {
 #endif
 
     for (int i = 0; i < g_FilmWidth * g_FilmHeight; i++) shadeNextPixel();
-    updateFilm(3);
+    updateFilm(10);
 
     glutPostRedisplay();
 }
@@ -669,7 +669,7 @@ void resize(int w, int h) {
 }
 
 int main(int argc, char *argv[]) {
-    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 4.0});
+    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 5.0});
     g_Camera.lookAt(Eigen::Vector3d{0.0, 0.5, 0.0}, Eigen::Vector3d{0.0, 1.0, 0.0});
     initAreaLights();
 
