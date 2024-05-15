@@ -8,6 +8,7 @@
 #include "Color.h"
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
+#include <GL/glut.h>
 
 class Image {
 public:
@@ -20,9 +21,13 @@ public:
 
     Image(const int &width, const int &height);
 
+    Image(const int &width, const int &height, const GLubyte* buffer);
+
     ~Image();
 
     void save(const std::string &fname) const;
+
+    void save(const std::string &fname, const float* buffer) const;
 
     void generateCSV(const std::string &fname) const;
 

@@ -12,6 +12,18 @@ Image::Image(const int &width, const int &height) : width(width), height(height)
         pixels[i] = Eigen::Vector3d::Zero();
     }
 }
+Image::Image(const int &width, const int &height, const GLubyte* buffer) : width(width), height(height) {
+    pixels = new Color[width * height];
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            const int index_p = y * width + x;
+            const int index_b = (height - y - 1) * width + x;
+            pixels[index_p].x() = buffer[index_b * 3];
+            pixels[index_p].y() = buffer[index_b * 3 + 1];
+            pixels[index_p].z() = buffer[index_b * 3 + 2];
+        }
+    }
+}
 
 Image::~Image() {
     delete[] pixels;
@@ -92,9 +104,10 @@ cv::Mat Image::toCvMat() const {
             auto& pixel = mat.at<cv::Vec3d>(i, j);
             Eigen::Vector3d& imgPixel = pixels[i * width + j];
 
-            pixel[0] = imgPixel[2];  // B
-            pixel[1] = imgPixel[1];  // G
-            pixel[2] = imgPixel[0];  // R
+            pixel[0] = imgPixel[2] / 255.0;  // B
+            pixel[1] = imgPixel[1] / 255.0;  // G
+            pixel[2] = imgPixel[0] / 255.0;  // R
+
         }
     }
 

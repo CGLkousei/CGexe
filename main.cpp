@@ -162,10 +162,14 @@ void updateFilm(const unsigned int samples) {
     }
 
     std::cout << "count: " << g_CountBuffer[0] << std::endl;
-    if (g_CountBuffer[0] == (samples + 1)) {
-        Image image(g_FilmWidth, g_FilmHeight);
-        convertBuffer(g_FilmBuffer, image.pixels);
-        image.save("sample");
+    if (g_CountBuffer[0] > samples) {
+        GLubyte *g_ImgBuffer = new GLubyte[g_FilmWidth * g_FilmHeight * 3];
+
+        glReadBuffer(GL_FRONT);
+        glReadPixels(0, 0, g_FilmWidth, g_FilmHeight, GL_RGB, GL_UNSIGNED_BYTE, g_ImgBuffer);
+
+        Image image(g_FilmWidth, g_FilmHeight, g_ImgBuffer);
+        image.save("new_sample1");
     }
 
     glBindTexture(GL_TEXTURE_2D, g_FilmTexture);
@@ -527,7 +531,12 @@ Eigen::Vector3d computeShading(const Ray &in_Ray, const RayHit &in_RayHit, const
     return I;
 }
 
-void shadeNextPixel() {
+void shadeNextPixel(const unsigned int samples) {
+    if (g_CountBuffer[0] > samples) {
+        glutLeaveMainLoop();
+    }
+
+
     stepToNextPixel(g_RayTracingInternalData);
 
     const int pixel_flat_idx =
@@ -575,9 +584,9 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-
-    for (int i = 0; i < g_FilmWidth * g_FilmHeight; i++) shadeNextPixel();
-    updateFilm(10);
+    const unsigned int samples = 2;
+    for (int i = 0; i < g_FilmWidth * g_FilmHeight; i++) shadeNextPixel(samples);
+    updateFilm(samples);
 
     glutPostRedisplay();
 }
