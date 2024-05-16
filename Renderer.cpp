@@ -214,8 +214,7 @@ Eigen::Vector3d Renderer::sampleRandomPoint(const AreaLight &in_Light) {
 
 Eigen::Vector3d Renderer::computeDirectLighting(const std::vector<AreaLight> &in_AreaLights, const Eigen::Vector3d &in_x,
                                       const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                      const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                      const int depth) {
+                                      const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material) {
     Eigen::Vector3d direct_light_contribution = Eigen::Vector3d::Zero();
 
     for (int i = 0; i < in_AreaLights.size(); i++) {
@@ -234,7 +233,6 @@ Eigen::Vector3d Renderer::computeDirectLighting(const std::vector<AreaLight> &in
         Ray ray;
         ray.o = in_x;
         ray.d = w_L;
-        ray.depth = depth + 1;
         ray.prev_mesh_idx = in_ray_hit.mesh_idx;
         ray.prev_primitive_idx = in_ray_hit.primitive_idx;
         RayHit rh;
@@ -271,7 +269,7 @@ Eigen::Vector3d Renderer::computeRayHitNormal(const Object &in_Object, const Ray
 
 Eigen::Vector3d Renderer::computeDiffuseReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                          const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                         const std::vector<AreaLight> &in_AreaLights, const int depth) {
+                         const std::vector<AreaLight> &in_AreaLights) {
     Eigen::Vector3d bn =
             in_Object.meshes[in_ray_hit.mesh_idx].vertices[in_Object.meshes[in_ray_hit.mesh_idx].triangles[in_ray_hit.primitive_idx].x()] -
             in_Object.meshes[in_ray_hit.mesh_idx].vertices[in_Object.meshes[in_ray_hit.mesh_idx].triangles[in_ray_hit.primitive_idx].z()];
@@ -293,7 +291,6 @@ Eigen::Vector3d Renderer::computeDiffuseReflection(const Eigen::Vector3d &in_x, 
     Ray ray;
     ray.o = in_x;
     ray.d = w_L;
-    ray.depth = depth + 1;
     ray.prev_mesh_idx = in_ray_hit.mesh_idx;
     ray.prev_primitive_idx = in_ray_hit.primitive_idx;
 
@@ -312,7 +309,7 @@ Eigen::Vector3d Renderer::computeDiffuseReflection(const Eigen::Vector3d &in_x, 
 
 Eigen::Vector3d Renderer::computeReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                   const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                  const std::vector<AreaLight> &in_AreaLights, const int depth) {
+                  const std::vector<AreaLight> &in_AreaLights) {
     const double e_dot_n = in_w_eye.dot(in_n);
     Eigen::Vector3d w_L = 2.0 * in_n * e_dot_n - in_w_eye;
     w_L.normalize();
@@ -320,7 +317,6 @@ Eigen::Vector3d Renderer::computeReflection(const Eigen::Vector3d &in_x, const E
     Ray ray;
     ray.o = in_x;
     ray.d = w_L;
-    ray.depth = depth + 1;
     ray.prev_mesh_idx = in_ray_hit.mesh_idx;
     ray.prev_primitive_idx = in_ray_hit.primitive_idx;
 
@@ -336,13 +332,13 @@ Eigen::Vector3d Renderer::computeReflection(const Eigen::Vector3d &in_x, const E
 
 Eigen::Vector3d Renderer::computeRefraction(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                   const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                  const std::vector<AreaLight> &in_AreaLights, const int depth) {
+                  const std::vector<AreaLight> &in_AreaLights) {
     const double e_dot_n = in_w_eye.dot(in_n);
     const double eta = in_ray_hit.isFront ? in_Material.eta : 1.0 / in_Material.eta;
 
     const double inside_sqrt = 1.0 - eta * eta * (1.0 - e_dot_n * e_dot_n);
     if (inside_sqrt < 0.0) {
-        return computeReflection(in_x, in_n, in_w_eye, in_ray_hit, in_Object, in_Material, in_AreaLights, depth);
+        return computeReflection(in_x, in_n, in_w_eye, in_ray_hit, in_Object, in_Material, in_AreaLights);
     }
     else {
         Eigen::Vector3d w_t = -in_n * sqrt(inside_sqrt) - eta * (in_w_eye - e_dot_n * in_n);
@@ -351,7 +347,6 @@ Eigen::Vector3d Renderer::computeRefraction(const Eigen::Vector3d &in_x, const E
         Ray ray;
         ray.o = in_x;
         ray.d = w_t;
-        ray.depth = depth + 1;
         ray.prev_mesh_idx = in_ray_hit.mesh_idx;
         ray.prev_primitive_idx = in_ray_hit.primitive_idx;
 
@@ -389,7 +384,7 @@ Eigen::Vector3d Renderer::computeShading(const Ray &in_Ray, const RayHit &in_Ray
 
     if (kd > 0.0) {
         I += computeDirectLighting(in_AreaLights, x, n, -in_Ray.d, in_RayHit, in_Object,
-                                   in_Object.meshes[in_RayHit.mesh_idx].material, in_Ray.depth);
+                                   in_Object.meshes[in_RayHit.mesh_idx].material);
     }
 
     const double r = randomMT();
@@ -397,23 +392,23 @@ Eigen::Vector3d Renderer::computeShading(const Ray &in_Ray, const RayHit &in_Ray
     if (r < kd) {
         I += in_Object.meshes[in_RayHit.mesh_idx].material.getKd().cwiseProduct(
                 computeDiffuseReflection(x, n, -in_Ray.d, in_RayHit, in_Object,
-                                         in_Object.meshes[in_RayHit.mesh_idx].material, in_AreaLights, in_Ray.depth)) / kd;
+                                         in_Object.meshes[in_RayHit.mesh_idx].material, in_AreaLights)) / kd;
     }
     else if (r < kd + ks) {
         I += in_Object.meshes[in_RayHit.mesh_idx].material.getKs().cwiseProduct(
                 computeReflection(x, n, -in_Ray.d, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material,
-                                  in_AreaLights, in_Ray.depth)) / ks;
+                                  in_AreaLights)) / ks;
     }
     else if (r < kd + ks + kt) {
         I += in_Object.meshes[in_RayHit.mesh_idx].material.getKt().cwiseProduct(
                 computeRefraction(x, n, -in_Ray.d, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material,
-                                  in_AreaLights, in_Ray.depth)) / kt;
+                                  in_AreaLights)) / kt;
     }
 
     return I;
 }
 
-void Renderer::rendering() {
+void Renderer::pathTrace() {
     for(int i = 0; i < g_FilmWidth * g_FilmHeight; i++){
         stepToNextPixel(g_RayTracingInternalData);
 
@@ -427,7 +422,6 @@ void Renderer::rendering() {
             double p_y = (g_RayTracingInternalData.nextPixel_j + randomMT()) / g_FilmHeight;
 
             Ray ray;
-            ray.depth = 0;
             g_Camera.screenView(p_x, p_y, ray);
             ray.prev_mesh_idx = -99;
             ray.prev_primitive_idx = -1;

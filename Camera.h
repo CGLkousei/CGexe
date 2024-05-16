@@ -17,7 +17,6 @@
 struct Ray {
     Eigen::Vector3d o;
     Eigen::Vector3d d;
-    int depth;
     int prev_mesh_idx;
     int prev_primitive_idx;
 };

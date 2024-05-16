@@ -48,23 +48,24 @@ public:
     void rayTriangleIntersect(const TriMesh &in_Mesh, const int in_Triangle_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights, const int in_Light_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Ray &in_Ray, RayHit &io_Hit);
-    void rendering();
+
+    void pathTrace();
+
     Eigen::Vector3d sampleRandomPoint(const AreaLight &in_Light);
 
     Eigen::Vector3d computeDirectLighting(const std::vector<AreaLight> &in_AreaLights, const Eigen::Vector3d &in_x,
                                           const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                          const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                          const int depth);
+                                          const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material);
     Eigen::Vector3d computeRayHitNormal(const Object &in_Object, const RayHit &in_Hit);
     Eigen::Vector3d computeDiffuseReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                                              const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                             const std::vector<AreaLight> &in_AreaLights, const int depth);
+                                             const std::vector<AreaLight> &in_AreaLights);
     Eigen::Vector3d computeReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                                       const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                      const std::vector<AreaLight> &in_AreaLights, const int depth);
+                                      const std::vector<AreaLight> &in_AreaLights);
     Eigen::Vector3d computeRefraction(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                                       const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                      const std::vector<AreaLight> &in_AreaLights, const int depth);
+                                      const std::vector<AreaLight> &in_AreaLights);
     Eigen::Vector3d computeShading(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object,
                                    const std::vector<AreaLight> &in_AreaLights);
 };

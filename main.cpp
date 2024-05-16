@@ -115,7 +115,7 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     const unsigned int samples = 30;
-    g_renderer.rendering();
+    g_renderer.pathTrace();
     updateFilm();
 
     if(g_renderer.g_CountBuffer[0] >= samples){
