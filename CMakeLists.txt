@@ -23,7 +23,7 @@ add_executable(CGexe
         Image.h
         Color.cpp
         Color.h
-)
+        Renderer.cpp Renderer.h)
 
 #find_package(OpenCV CONFIG REQUIRED)
 #target_link_libraries(${PROJECT_NAME} PRIVATE opencv_ml opencv_dnn opencv_core opencv_flann)
