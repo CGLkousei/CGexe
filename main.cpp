@@ -114,12 +114,13 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    const unsigned int samples = 30;
+    //20:00
+    const unsigned int samples = 1000;
     g_renderer.pathTrace();
     updateFilm();
 
     if(g_renderer.g_CountBuffer[0] >= samples){
-        g_renderer.saveImg("output");
+        g_renderer.saveImg("pathtrace");
         glutLeaveMainLoop();
     }
 
