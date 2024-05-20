@@ -32,6 +32,7 @@ struct Material {
     float ks;
     float kt;
     double eta;
+    double m;
 
     Eigen::Vector3d getKd() const;
     Eigen::Vector3d getKs() const;

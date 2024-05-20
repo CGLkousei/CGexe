@@ -49,8 +49,8 @@ public:
     void rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights, const int in_Light_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Ray &in_Ray, RayHit &io_Hit);
 
-    void pathTrace();
     void rendering();
+    void rendering(const int mode);
 
     Eigen::Vector3d sampleRandomPoint(const AreaLight &in_Light);
 
@@ -70,7 +70,11 @@ public:
     Eigen::Vector3d computeShading(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
 
     Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
-    double diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &in_ray, const RayHit &in_ray_hit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
+    Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
+    Eigen::Vector3d computeDirectLighting(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights,const Object &in_Object, const int mode);
+
+    double diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object);
+    double blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m);
 };
 
 

@@ -43,6 +43,7 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
+int mode = 1;
 int width = 640;
 int height = 480;
 int nSamplesPerPixel = 1;
@@ -114,14 +115,18 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    //20:00
-    const unsigned int samples = 1000;
-    g_renderer.pathTrace();
+    unsigned int samples = 100;
+    g_renderer.rendering(2);
     updateFilm();
 
     if(g_renderer.g_CountBuffer[0] >= samples){
-        g_renderer.saveImg("pathtrace");
-        glutLeaveMainLoop();
+        g_renderer.saveImg("mode_" + std::to_string(mode));
+        mode++;
+        g_renderer.resetFilm();
+        g_renderer.clearRayTracedResult();
+
+        if(mode > 3)
+            glutLeaveMainLoop();
     }
 
     glutPostRedisplay();

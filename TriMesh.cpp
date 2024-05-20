@@ -39,6 +39,7 @@ struct InternalMaterial {
     float kt;
 
     double eta;
+    double m;
 
     bool valid;
 };
@@ -185,6 +186,7 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
             material.ks = 0.0;
             material.kt = 0.0;
             material.eta = 1.0;
+            material.m = 100.0;
             material.valid = true;
         }
 
@@ -223,6 +225,13 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
             sscanf(line, "d %f", &Kt);
 
             material.kt = Kt;
+        }
+
+        if (line[0] == 'm'){
+            float m;
+            sscanf(line, "m %f", &m);
+
+            material.m = m;
         }
 
         if (strncmp(line, "Pr", 2) == 0) {
@@ -456,6 +465,7 @@ bool loadObj(const std::string &in_filename, Object &out_object) {
             mesh.material.ks = internal_materials[internal_triangles[i].material_id].ks;
             mesh.material.kt = internal_materials[internal_triangles[i].material_id].kt;
             mesh.material.eta = internal_materials[internal_triangles[i].material_id].eta;
+            mesh.material.m = internal_materials[internal_triangles[i].material_id].m;
 
             if (internal_materials[internal_triangles[i].material_id].texture_name.length() > 0) {
                 mesh.material.texture = prepareTextureFromJpegFile(
@@ -471,6 +481,7 @@ bool loadObj(const std::string &in_filename, Object &out_object) {
             mesh.material.ks = 0.0;
             mesh.material.kt = 0.0;
             mesh.material.eta = 1.0;
+            mesh.material.m = 100.0;
             mesh.material.texture = 0;
         }
 
