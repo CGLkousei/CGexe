@@ -544,14 +544,14 @@ Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object,
         diffuseSample(x, n, new_ray, in_RayHit, in_Object);
         I += computeNEE(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
-//    if(r < kd + ks){
-//        I += computeDirectLighting(in_Ray, in_RayHit, in_AreaLights, in_Object, 2);
-//        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
-//        if(pdf < 0.0f)
-//            return I;
-//        const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
-//        I += computeNEE(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine) / ks;
-//    }
+    else if(r < kd + ks){
+        I += computeDirectLighting(in_Ray, in_RayHit, in_AreaLights, in_Object, 2);
+        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
+        if(pdf < 0.0f)
+            return I;
+        const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
+        I += computeNEE(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine) / ks;
+    }
 
     return I;
 }

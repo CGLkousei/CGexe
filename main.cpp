@@ -115,8 +115,8 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 100;
-    g_renderer.rendering(2);
+    unsigned int samples = 1000;
+    g_renderer.rendering(mode);
     updateFilm();
 
     if(g_renderer.g_CountBuffer[0] >= samples){
