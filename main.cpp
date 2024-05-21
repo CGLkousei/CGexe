@@ -120,7 +120,7 @@ void idle() {
     updateFilm();
 
     if(g_renderer.g_CountBuffer[0] >= samples){
-        g_renderer.saveImg("mode_" + std::to_string(mode));
+        g_renderer.saveImg("specular_mode_" + std::to_string(mode));
         mode++;
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();

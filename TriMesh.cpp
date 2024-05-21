@@ -205,12 +205,6 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
 
                 material.ks = r;
             }
-            else if (line[1] == 't') {
-                float r, g, b;
-                sscanf(line, "Kt %f %f %f", &r, &g, &b);
-
-                material.kt = r;
-            }
         }
 
         if (strncmp(line, "Ni", 2) == 0) {
