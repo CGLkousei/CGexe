@@ -19,6 +19,7 @@ struct Ray {
     Eigen::Vector3d d;
     int prev_mesh_idx;
     int prev_primitive_idx;
+    double pdf;
 };
 
 class Camera {

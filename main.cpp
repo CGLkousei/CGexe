@@ -44,6 +44,9 @@ GLuint g_FilmTexture = 0;
 bool g_DrawFilm = true;
 
 int mode = 1;
+clock_t start_time;
+clock_t end_time;
+
 int width = 640;
 int height = 480;
 int nSamplesPerPixel = 1;
@@ -90,7 +93,25 @@ void initAreaLights() {
     g_AreaLights.push_back(light1);
     g_AreaLights.push_back(light2);
 }
+void changeMode(const unsigned int samples, const int limit, std::string filename){
+    if(g_renderer.g_CountBuffer[0] >= samples){
+        end_time = clock();
+        const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
+        std::string time_str = std::to_string(static_cast<int>(rendering_time));
 
+        g_renderer.saveImg(filename + "_" + time_str + "s_" + std::to_string(mode));
+        std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
+
+        mode++;
+        g_renderer.resetFilm();
+        g_renderer.clearRayTracedResult();
+
+        if(mode > limit)
+            glutLeaveMainLoop();
+
+        start_time = clock();
+    }
+}
 
 
 void initFilm() {
@@ -115,19 +136,12 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 1000;
+    unsigned int samples = 5;
+    unsigned int limit = 3;
     g_renderer.rendering(mode);
     updateFilm();
 
-    if(g_renderer.g_CountBuffer[0] >= samples){
-        g_renderer.saveImg("specular_mode_" + std::to_string(mode));
-        mode++;
-        g_renderer.resetFilm();
-        g_renderer.clearRayTracedResult();
-
-        if(mode > 3)
-            glutLeaveMainLoop();
-    }
+    changeMode(samples, limit, "mode");
 
     glutPostRedisplay();
 }
@@ -192,6 +206,8 @@ int main(int argc, char *argv[]) {
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    start_time = clock();
 
     glutMainLoop();
     return 0;
