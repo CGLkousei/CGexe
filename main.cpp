@@ -25,6 +25,7 @@
 #include <math.h>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 
 #include "Camera.h"
 #include "Jpeg.h"
@@ -93,13 +94,22 @@ void initAreaLights() {
     g_AreaLights.push_back(light1);
     g_AreaLights.push_back(light2);
 }
-void changeMode(const unsigned int samples, const int limit, std::string filename){
+void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
         end_time = clock();
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
+        std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
-        g_renderer.saveImg(filename + "_" + time_str + "s_" + std::to_string(mode));
+        //make the directory
+        if(!std::filesystem::exists(directory)){
+            if(!std::filesystem::create_directories(directory)){
+                std::cerr << "Failed to create directory: " << directory << std::endl;
+                return;
+            }
+        }
+
+        g_renderer.saveImg( directory + "/" + file_str);
         std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
 
         mode++;
@@ -136,12 +146,12 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 5;
+    unsigned int samples = 10000;
     unsigned int limit = 3;
     g_renderer.rendering(mode);
     updateFilm();
 
-    changeMode(samples, limit, "mode");
+    changeMode(samples, limit, "spec", "difference");
 
     glutPostRedisplay();
 }

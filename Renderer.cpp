@@ -60,6 +60,7 @@ void Renderer::saveImg(const std::string filename) {
 
     Image image(g_FilmWidth, g_FilmHeight, g_ImgBuffer);
     image.save(filename);
+    image.generateCSV(filename);
 }
 
 void Renderer::stepToNextPixel(RayTracingInternalData &io_data) {
@@ -445,17 +446,15 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
             switch(mode){
                 case 1: {
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__;
-                    const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
-                    I += area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G) / kd;
+                    I += area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
                 case 2: {
                     const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
-                    const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
                     const Eigen::Vector3d halfVector = ((-1 * in_Ray.d) + x_L).normalized();
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 1) * pow(cosine, m) / (2.0f * __PI__);
-                    I += area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G) / ks;
+                    I += area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
             }
@@ -497,18 +496,16 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
             switch(mode){
                 case 1: {
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__;
-                    const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
 
                     const double path_pdf = getDiffuseProbablitity(n, x_L);
                     const double nee_pdf = (dist * dist) / (area * cos_light);
                     const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
 
-                    I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G) / kd;
+                    I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
                 case 2: {
                     const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
-                    const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
 
                     const Eigen::Vector3d halfVector = ((-1 * in_Ray.d) + x_L).normalized();
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
@@ -518,7 +515,7 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
                     const double nee_pdf = (dist * dist) / (area * cos_light);
                     const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
 
-                    I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G) / ks;
+                    I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
             }
