@@ -28,12 +28,10 @@
 #include <filesystem>
 
 #include "Camera.h"
-#include "Jpeg.h"
 #include "TriMesh.h"
 #include "GLPreview.h"
-#include "random.h"
-#include "Image.h"
 #include "Renderer.h"
+#include "ParticipatingMedia.h"
 
 
 const int g_FilmWidth = 640;
@@ -44,7 +42,7 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 1;
+int mode = 4;
 clock_t start_time;
 clock_t end_time;
 
@@ -61,6 +59,7 @@ double g_FrameSize_WindowSize_Scale_y = 1.0;
 Camera g_Camera;
 Renderer g_renderer;
 std::vector<AreaLight> g_AreaLights;
+std::vector<ParticipatingMedia> g_ParticipatingMedia;
 
 Object g_Obj;
 
@@ -94,6 +93,19 @@ void initAreaLights() {
     g_AreaLights.push_back(light1);
     g_AreaLights.push_back(light2);
 }
+void initParticipatingMedia(){
+    ParticipatingMedia pm;
+    pm.pos << 0.0f, 0.0f, 0.0f;
+    pm.color << 0.8f, 0.8f, 0.8f;
+
+    pm.radius = 10.0f;
+    pm.extinction = 0.2;
+    pm.albedo = 0.9;
+    pm.hg_g = 0.9;
+
+    g_ParticipatingMedia.push_back(pm);
+}
+
 void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
         end_time = clock();
@@ -147,11 +159,11 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     unsigned int samples = 10000;
-    unsigned int limit = 3;
+    unsigned int limit = 4;
     g_renderer.rendering(mode);
     updateFilm();
 
-    changeMode(samples, limit, "spec", "difference");
+    changeMode(samples, limit, "diffuse", "ParticipatingMedia");
 
     glutPostRedisplay();
 }
@@ -190,6 +202,7 @@ int main(int argc, char *argv[]) {
     g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 5.0});
     g_Camera.lookAt(Eigen::Vector3d{0.0, 0.5, 0.0}, Eigen::Vector3d{0.0, 1.0, 0.0});
     initAreaLights();
+    initParticipatingMedia();
 
     glutInit(&argc, argv);
     glutInitWindowSize(width, height);
@@ -213,7 +226,7 @@ int main(int argc, char *argv[]) {
 
     initFilm();
     loadObj("../obj/room3.obj", g_Obj);
-    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
+    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 

@@ -10,10 +10,10 @@ add_executable(CGexe
         Camera.h
         GLPreview.cpp
         GLPreview.h
-        Jpeg.cpp
-        Jpeg.h
         Light.cpp
         Light.h
+        Jpeg.cpp
+        Jpeg.h
         main.cpp
         random.c
         random.h
@@ -23,7 +23,10 @@ add_executable(CGexe
         Image.h
         Color.cpp
         Color.h
-        Renderer.cpp Renderer.h)
+        Renderer.cpp
+        Renderer.h
+        ParticipatingMedia.cpp
+        ParticipatingMedia.h)
 
 #find_package(OpenCV CONFIG REQUIRED)
 #target_link_libraries(${PROJECT_NAME} PRIVATE opencv_ml opencv_dnn opencv_core opencv_flann)
