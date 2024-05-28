@@ -96,12 +96,12 @@ void initAreaLights() {
 void initParticipatingMedia(){
     ParticipatingMedia pm;
     pm.pos << 0.0f, 0.0f, 0.0f;
-    pm.color << 0.8f, 0.8f, 0.8f;
+    pm.color << 0.68f, 0.68f, 0.68f;
 
     pm.radius = 10.0f;
-    pm.extinction = 0.2;
-    pm.albedo = 0.9;
-    pm.hg_g = 0.9;
+    pm.extinction = 0.5;
+    pm.albedo = 0.95;
+    pm.hg_g = 0.95;
 
     g_ParticipatingMedia.push_back(pm);
 }
@@ -158,7 +158,7 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 10000;
+    unsigned int samples = 2000;
     unsigned int limit = 4;
     g_renderer.rendering(mode);
     updateFilm();

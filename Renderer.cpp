@@ -670,13 +670,12 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
 }
 Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const std::vector<ParticipatingMedia> &all_medias, const Object &in_Object, const int mode) {
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
+    const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
+    const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
     int p_index;
-    const double s = getFreePath(all_medias, in_Ray.o, p_index);
+    const double s = getFreePath(all_medias, x, p_index);
 
     for(int i = 0; i < in_AreaLights.size(); i++) {
-        const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
-        const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
-
         const Eigen::Vector3d p_light = sampleRandomPoint(in_AreaLights[i]);
         Eigen::Vector3d x_L = p_light - x;
         const double distance = x_L.norm();
@@ -690,9 +689,8 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
         const double cos_x = std::max<double>(0.0, x_L.dot(n));
         const double G = (cos_x * cos_light) / (distance * distance);
 
-        if(in_RayHit.isPM && s < distance){
-            return Eigen::Vector3d::Zero();
-        }
+        if(in_RayHit.isPM && s < distance)
+            continue;
 
         // shadow test
         Ray ray;
