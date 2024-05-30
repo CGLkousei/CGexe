@@ -12,6 +12,7 @@
 #include "Jpeg.h"
 #include <iostream>
 #include <string.h>
+#include <algorithm>
 #include <map>
 
 struct InternalVertices {
@@ -28,6 +29,13 @@ struct InternalTriangles {
 
     std::string material_name;
     int material_id;
+};
+
+struct InternalVertices_Lines {
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> vertices;
+};
+struct InternalPoints {
+    std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i>> points;
 };
 
 struct InternalMaterial {
@@ -255,9 +263,8 @@ bool loadMtl(const std::string &in_filename, std::vector<InternalMaterial> &io_i
     return true;
 }
 
-bool _loadObj(const std::string &in_filename, InternalVertices &out_internal_vertices,
-              std::vector<InternalTriangles> &out_internal_triangles,
-              std::vector<InternalMaterial> &out_internal_materials) {
+bool _loadObj(const std::string &in_filename, InternalVertices &out_internal_vertices, std::vector<InternalTriangles> &out_internal_triangles, std::vector<InternalMaterial> &out_internal_materials,
+              std::vector<InternalPoints> &out_line_points) {
     FILE *f = NULL;
     const int BUF_MAX = 4096;
 
@@ -277,8 +284,10 @@ bool _loadObj(const std::string &in_filename, InternalVertices &out_internal_ver
 
     out_internal_triangles.clear();
     out_internal_materials.clear();
+    out_line_points.clear();
 
     InternalTriangles triangles;
+    InternalPoints points;
 
     while (fgets(line, BUF_MAX, f) != NULL) {
         // load the material file
@@ -304,6 +313,10 @@ bool _loadObj(const std::string &in_filename, InternalVertices &out_internal_ver
             if (triangles.triangles.size() > 0) {
                 out_internal_triangles.push_back(triangles);
                 resetInternalTriangles(triangles);
+            }
+            if(points.points.size() > 0) {
+                out_line_points.push_back(points);
+                points.points.clear();
             }
 
             // set the specified material name
@@ -357,22 +370,35 @@ bool _loadObj(const std::string &in_filename, InternalVertices &out_internal_ver
                 triangles.triangles.push_back(vertex);
             }
         }
+
+        if (line[0] == 'l') {
+            int x, y;
+            sscanf(line, "l %d %d", &x, &y);
+
+            Eigen::Vector2i tmp(x, y);
+            points.points.push_back(tmp);
+        }
     }
 
     if (triangles.triangles.size() > 0) {
         out_internal_triangles.push_back(triangles);
+    }
+    if(points.points.size() > 0) {
+        out_line_points.push_back(points);
     }
 
     fclose(f);
     return true;
 }
 
-bool loadObj(const std::string &in_filename, Object &out_object) {
+bool loadObj(const std::string &in_filename, Object &out_object, Hair &out_hair) {
     InternalVertices internal_vertices;
     std::vector<InternalTriangles> internal_triangles;
     std::vector<InternalMaterial> internal_materials;
 
-    _loadObj(in_filename, internal_vertices, internal_triangles, internal_materials);
+    std::vector<InternalPoints> internal_points;
+
+    _loadObj(in_filename, internal_vertices, internal_triangles, internal_materials, internal_points);
 
     // relate the polygon group name with the material name
     for (int i = 0; i < internal_triangles.size(); i++) {
@@ -480,6 +506,33 @@ bool loadObj(const std::string &in_filename, Object &out_object) {
         }
 
         out_object.meshes.push_back(mesh);
+    }
+
+    for (int i = 0; i < internal_points.size(); i++) {
+        std::vector<int> index;
+
+        for (int j = 0; j < internal_points[i].points.size(); j++) {
+            if(std::find(index.begin(), index.end(), internal_points[i].points[j].x()) == index.end()){
+                index.push_back(internal_points[i].points[j].x());
+            }
+            if(std::find(index.begin(), index.end(), internal_points[i].points[j].y()) == index.end()){
+                index.push_back(internal_points[i].points[j].y());
+            }
+        }
+
+        TriCurb curb;
+        curb.lines.resize(internal_points[i].points.size());
+        curb.vertices.resize(index.size());
+        for (int j = 0; j < internal_points[i].points.size(); j++) {
+            curb.lines[j].x() = internal_points[i].points[j].x() - internal_points[i].points[0].x();
+            curb.lines[j].y() = internal_points[i].points[j].y() - internal_points[i].points[0].x();
+        }
+
+        for (int j = 0; j < index.size(); j++) {
+            curb.vertices[j] = internal_vertices.vertices[index[j]-1];
+        }
+
+        out_hair.hairs.push_back(curb);
     }
 
     return true;

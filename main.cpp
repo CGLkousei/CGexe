@@ -44,7 +44,7 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 1;
+int mode = 3;
 clock_t start_time;
 clock_t end_time;
 
@@ -63,36 +63,63 @@ Renderer g_renderer;
 std::vector<AreaLight> g_AreaLights;
 
 Object g_Obj;
+Hair g_Hair;
 
 void initAreaLights() {
     AreaLight light1;
-    light1.pos << -1.2, 1.2, 1.2;
+    light1.pos << 0.0, 2.5, 0.0;
     light1.arm_u << 1.0, 0.0, 0.0;
     light1.arm_v = -light1.pos.cross(light1.arm_u);
     light1.arm_v.normalize();
-    light1.arm_u = light1.arm_u * 0.3;
-    light1.arm_v = light1.arm_v * 0.2;
-
-    //light1.color << 1.0, 0.8, 0.3;
+    light1.arm_u = light1.arm_u * 0.7;
+    light1.arm_v = light1.arm_v * 0.7;
     light1.color << 1.0, 1.0, 1.0;
-    //light1.intensity = 64.0;
-    light1.intensity = 48.0;
+    light1.intensity = 30.0;
 
-    AreaLight light2;
-    light2.pos << 1.2, 1.2, 0.0;
-    light2.arm_u << 1.0, 0.0, 0.0;
-    light2.arm_v = -light2.pos.cross(light2.arm_u);
-    light2.arm_v.normalize();
-    light2.arm_u = light2.arm_u * 0.3;
-    light2.arm_v = light2.arm_v * 0.2;
-
-    //light2.color << 0.3, 0.3, 1.0;
-    light2.color << 1.0, 1.0, 1.0;
-    //light2.intensity = 64.0;
-    light2.intensity = 30.0;
+//    AreaLight light1;
+//    light1.pos << 1.2, 1.2, 1.2;
+//    light1.arm_u << 1.0, 0.0, 0.0;
+//    light1.arm_v = -light1.pos.cross(light1.arm_u);
+//    light1.arm_v.normalize();
+//    light1.arm_u = light1.arm_u * 0.3;
+//    light1.arm_v = light1.arm_v * 0.3;
+//    light1.color << 1.0, 1.0, 1.0;
+//    light1.intensity = 30.0;
+//
+//    AreaLight light2;
+//    light2.pos << 1.2, 1.2, 1.2;
+//    light2.arm_u << 1.0, 0.0, 0.0;
+//    light2.arm_v = -light2.pos.cross(light2.arm_u);
+//    light2.arm_v.normalize();
+//    light2.arm_u = light2.arm_u * 0.3;
+//    light2.arm_v = light2.arm_v * 0.3;
+//    light2.color << 1.0, 1.0, 1.0;
+//    light2.intensity = 30.0;
+//
+//    AreaLight light3;
+//    light3.pos << -1.2, 1.2, 1.2;
+//    light3.arm_u << 1.0, 0.0, 0.0;
+//    light3.arm_v = -light3.pos.cross(light3.arm_u);
+//    light3.arm_v.normalize();
+//    light3.arm_u = light3.arm_u * 0.3;
+//    light3.arm_v = light3.arm_v * 0.3;
+//    light3.color << 1.0, 1.0, 1.0;
+//    light3.intensity = 30.0;
+//
+//    AreaLight light4;
+//    light4.pos << -1.2, 1.2, -1.2;
+//    light4.arm_u << 1.0, 0.0, 0.0;
+//    light4.arm_v = -light4.pos.cross(light4.arm_u);
+//    light4.arm_v.normalize();
+//    light4.arm_u = light4.arm_u * 0.3;
+//    light4.arm_v = light4.arm_v * 0.3;
+//    light4.color << 1.0, 1.0, 1.0;
+//    light4.intensity = 30.0;
 
     g_AreaLights.push_back(light1);
-    g_AreaLights.push_back(light2);
+//    g_AreaLights.push_back(light2);
+//    g_AreaLights.push_back(light3);
+//    g_AreaLights.push_back(light4);
 }
 void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
@@ -146,12 +173,12 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 10000;
+    unsigned int samples = 1000;
     unsigned int limit = 3;
     g_renderer.rendering(mode);
     updateFilm();
 
-    changeMode(samples, limit, "spec", "difference");
+    changeMode(samples, limit, "mis", "hair");
 
     glutPostRedisplay();
 }
@@ -212,7 +239,7 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/room3.obj", g_Obj);
+    loadObj("../obj/hair.obj", g_Obj, g_Hair);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

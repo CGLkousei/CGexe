@@ -39,6 +39,15 @@ struct Material {
     Eigen::Vector3d getKt() const;
 };
 
+struct HairMaterial {
+    Eigen::Vector3d color;
+    float kd;
+    float ks;
+    float kt;
+    double eta;
+    double m;
+};
+
 struct TriMesh {
     std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> vertices;
     std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> vertex_normals;
@@ -50,8 +59,19 @@ struct TriMesh {
     Material material;
 };
 
+struct TriCurb {
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> vertices;
+    std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i>> lines;
+
+    HairMaterial hair_material;
+};
+
 struct Object {
     std::vector<TriMesh> meshes;
+};
+
+struct Hair {
+    std::vector<TriCurb> hairs;
 };
 
 void resetMesh(TriMesh &io_Mesh);
@@ -64,6 +84,6 @@ GLuint prepareTextureFromJpegFile(const char *in_FileName);
 
 void resizeObj(Object &io_object, const Eigen::Vector3d &in_min, const Eigen::Vector3d &in_max);
 
-bool loadObj(const std::string &in_filename, Object &out_object);
+bool loadObj(const std::string &in_filename, Object &out_object, Hair &out_hair);
 
 #endif /* TriMesh_h */
