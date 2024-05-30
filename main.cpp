@@ -214,6 +214,8 @@ int main(int argc, char *argv[]) {
     g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
 
+    std::cout << "jo" << std::endl;
+
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     start_time = clock();
