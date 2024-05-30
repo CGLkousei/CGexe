@@ -34,11 +34,10 @@ struct Material {
 
 struct HairMaterial {
     Eigen::Vector3d color;
-    float kd;
-    float ks;
-    float kt;
-    double eta;
-    double m;
+
+    double absorb;
+    double alpha;
+    double beta;
 };
 
 struct TriMesh {
@@ -56,7 +55,11 @@ struct TriCurb {
     std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> vertices;
     std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i>> lines;
 
+    double radius;
     HairMaterial hair_material;
+
+    void setRadius(const double r);
+    void setMaterial(const Eigen::Vector3d &set_color, const double set_absorb, const double set_alpha, const double set_beta);
 };
 
 struct Object {
