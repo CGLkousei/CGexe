@@ -574,3 +574,14 @@ Eigen::Vector3d Material::getKs() const{
 Eigen::Vector3d Material::getKt() const{
     return kt * color;
 }
+
+void TriCurb::setMaterial(const Eigen::Vector3d &set_color, const double set_absorb, const double set_alpha,
+                          const double set_beta) {
+    hair_material.color = set_color;
+    hair_material.absorb = set_absorb;
+    hair_material.alpha = set_alpha;
+    hair_material.beta = set_beta;
+}
+void TriCurb::setRadius(const double r) {
+    radius = r;
+}

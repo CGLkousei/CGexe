@@ -35,11 +35,12 @@ public:
     Camera g_Camera;
     std::vector<AreaLight> g_AreaLights;
     Object g_Obj;
+    Hair g_Hair;
 
     Renderer();
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
 
-    void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights);
+    void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights, Hair hair);
 
     void resetFilm();
     void saveImg(const std::string filename);
@@ -47,7 +48,7 @@ public:
     void stepToNextPixel(RayTracingInternalData &io_data);
     void rayTriangleIntersect(const TriMesh &in_Mesh, const int in_Triangle_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights, const int in_Light_idx, const Ray &in_Ray, RayHit &out_Result);
-    void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Ray &in_Ray, RayHit &io_Hit);
+    void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const Ray &in_Ray, RayHit &io_Hit);
 
     void rendering();
     void rendering(const int mode);
@@ -58,23 +59,17 @@ public:
                                           const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                                           const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material);
     Eigen::Vector3d computeRayHitNormal(const Object &in_Object, const RayHit &in_Hit);
-    Eigen::Vector3d computeDiffuseReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                             const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                             const std::vector<AreaLight> &in_AreaLights);
-    Eigen::Vector3d computeReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                      const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                      const std::vector<AreaLight> &in_AreaLights);
+
     Eigen::Vector3d computeRefraction(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
                                       const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
                                       const std::vector<AreaLight> &in_AreaLights);
-    Eigen::Vector3d computeShading(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
 
-    Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
-    Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
-    Eigen::Vector3d computeMIS(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
+    Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair);
+    Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, bool first);
+    Eigen::Vector3d computeMIS(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, bool first);
 
-    Eigen::Vector3d computeDirectLighting(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights,const Object &in_Object, const int mode);
-    Eigen::Vector3d computeDirectLighting_MIS(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights,const Object &in_Object, const int mode);
+    Eigen::Vector3d computeDirectLighting(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const int mode);
+    Eigen::Vector3d computeDirectLighting_MIS(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const int mode);
     double getLightProbability(const std::vector<AreaLight> &in_AreaLights);
     double getDiffuseProbablitity(const Eigen::Vector3d normal, const Eigen::Vector3d out_dir);
     double getBlinnPhongProbablitity(const Eigen::Vector3d in_dir, const Eigen::Vector3d normal, const Eigen::Vector3d out_dir, const double m);
