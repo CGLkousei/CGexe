@@ -48,6 +48,7 @@ public:
     void stepToNextPixel(RayTracingInternalData &io_data);
     void rayTriangleIntersect(const TriMesh &in_Mesh, const int in_Triangle_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights, const int in_Light_idx, const Ray &in_Ray, RayHit &out_Result);
+    void rayHairIntersect(const TriCurb &in_Curb, const int in_Line_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const Ray &in_Ray, RayHit &io_Hit);
 
     void rendering();
