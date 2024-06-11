@@ -1,10 +1,3 @@
-//
-//  Jpeg.cpp
-//  gl3d_mesh_vertex_shading_texture
-//
-//  Created by Yonghao Yue on 2019/10/22.
-//  Copyright © 2019 Yonghao Yue. All rights reserved.
-//
 
 #define _CRT_SECURE_NO_WARNINGS
 

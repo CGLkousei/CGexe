@@ -1,10 +1,3 @@
-//
-//  TriMesh.h
-//  gl3d_obj_mesh
-//
-//  Created by Yonghao Yue on 2019/11/06.
-//  Copyright © 2019 Yonghao Yue. All rights reserved.
-//
 
 #ifndef TriMesh_h
 #define TriMesh_h
