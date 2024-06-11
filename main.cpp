@@ -36,7 +36,7 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 3;
+int mode = 1;
 clock_t start_time;
 clock_t end_time;
 
@@ -126,7 +126,7 @@ void idle() {
     g_renderer.rendering(mode);
     updateFilm();
 
-    changeMode(samples, limit, "spec", "difference");
+    changeMode(samples, limit, "diffuse", "difference_sample");
 
     glutPostRedisplay();
 }
