@@ -546,7 +546,7 @@ double Renderer::getBlinnPhongProbablitity(const Eigen::Vector3d in_dir, const E
     const Eigen::Vector3d halfVector = ((-1.0f * in_dir) + out_dir).normalized();
     const double cosine = std::max<double>(0.0f, normal.dot(halfVector));
 
-    return (m + 1) * pow(cosine, m) / 2.0 * __PI__;
+    return (m + 1) * pow(cosine, m) / (2.0 * __PI__);
 }
 
 double Renderer::diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object) {
