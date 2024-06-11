@@ -1,9 +1,3 @@
-/*
- * uniformly distributed random number generation with
- * twice faster version of Mersenne Twister.
- *
- * $Id: random.h,v 1.4 2003/06/18 11:35:15 syoyo Exp $
- */
 
 #ifndef RANDOM_H
 #define RANDOM_H

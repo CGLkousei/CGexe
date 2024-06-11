@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  gl3d_hello_world
-//
-//  Created by Yonghao Yue on 2019/09/28.
-//  Copyright © 2019 Yonghao Yue. All rights reserved.
-//
-
 #define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 #define EIGEN_DONT_VECTORIZE
 
