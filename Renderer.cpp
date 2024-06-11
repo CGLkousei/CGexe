@@ -273,10 +273,11 @@ void Renderer::rendering(const int mode) {
             double p_x = (g_RayTracingInternalData.nextPixel_i + randomMT()) / g_FilmWidth;
             double p_y = (g_RayTracingInternalData.nextPixel_j + randomMT()) / g_FilmHeight;
 
-            Ray ray; ray.depth = 0;
+            Ray ray;
             g_Camera.screenView(p_x, p_y, ray);
             ray.prev_mesh_idx = -99;
             ray.prev_primitive_idx = -1;
+
 
             switch(mode){
                 case 1: {
@@ -298,10 +299,14 @@ void Renderer::rendering(const int mode) {
         g_AccumulationBuffer[pixel_flat_idx * 3 + 1] += I.y();
         g_AccumulationBuffer[pixel_flat_idx * 3 + 2] += I.z();
         g_CountBuffer[pixel_flat_idx] += nSamplesPerPixel;
+
+        g_FilmBuffer[i * 3] = g_AccumulationBuffer[i * 3] / g_CountBuffer[i];
+        g_FilmBuffer[i * 3 + 1] = g_AccumulationBuffer[i * 3 + 1] / g_CountBuffer[i];
+        g_FilmBuffer[i * 3 + 2] = g_AccumulationBuffer[i * 3 + 2] / g_CountBuffer[i];
     }
 }
 
-Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights) {
+Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair) {
     Ray new_ray; RayHit in_RayHit;
     rayTracing(in_Object, in_AreaLights, in_Hair, in_Ray, in_RayHit);
 
@@ -326,25 +331,21 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
     const double r = randomMT();
 
     if(r < kd){
-        diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
-        I += computePathTrace(new_ray, in_Object, in_AreaLights).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+        diffuseSample(x, n, new_ray, in_RayHit, in_Object);
+        I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
     else if(r < kd + ks){
-        const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
-        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m, in_Ray.depth);
+        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
         if(pdf < 0.0f)
             return I;
         const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
-        I += computePathTrace(new_ray, in_Object, in_AreaLights).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
+        I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine) / ks;
     }
 
     return I;
 }
 
-Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first) {
-    if(in_Ray.depth >= MAX_RAY_DEPTH)
-        return Eigen::Vector3d::Zero();
-
+Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, bool first) {
     Ray new_ray; RayHit in_RayHit;
     rayTracing(in_Object, in_AreaLights, in_Hair, in_Ray, in_RayHit);
 
@@ -363,27 +364,23 @@ Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object,
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
+
     const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
     const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
-    double r = randomMT() * (kd + ks);
+    const double r = randomMT();
 
-    if(r < kd)
-        I += computeDirectLighting(in_Ray, in_RayHit, in_AreaLights, in_Object, 1);
-    else if(r < kd + ks)
-        I += computeDirectLighting(in_Ray, in_RayHit, in_AreaLights, in_Object, 2);
-
-    r = randomMT();
     if(r < kd){
-        diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
-        I += computeNEE(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+        I += computeDirectLighting(in_Ray, in_RayHit, in_Object, in_AreaLights, in_Hair, 1);
+        diffuseSample(x, n, new_ray, in_RayHit, in_Object);
+        I += computeNEE(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
     else if(r < kd + ks){
-        const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
-        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m, in_Ray.depth);
+        I += computeDirectLighting(in_Ray, in_RayHit, in_Object, in_AreaLights, in_Hair, 2);
+        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
         if(pdf < 0.0f)
             return I;
         const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
-        I += computeNEE(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
+        I += computeNEE(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine) / ks;
     }
 
     return I;
@@ -427,8 +424,8 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
     const double r = randomMT();
 
     if(r < kd){
-        I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, in_Object, 1);
-        const double pdf = diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
+        I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_Object, in_AreaLights, in_Hair, 1);
+        const double pdf = diffuseSample(x, n, new_ray, in_RayHit, in_Object);
         new_ray.pdf = pdf;
         I += computeMIS(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
@@ -447,10 +444,11 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
 
 Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const int mode) {
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
-    const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
-    const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
     for(int i = 0; i < in_AreaLights.size(); i++) {
+        const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
+        const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
+
         const Eigen::Vector3d p_light = sampleRandomPoint(in_AreaLights[i]);
         Eigen::Vector3d x_L = p_light - x;
         const double dist = x_L.norm();
@@ -473,9 +471,6 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
         RayHit rh;
         rayTracing(in_Object, in_AreaLights, in_Hair, ray, rh);
         if (rh.mesh_idx < 0 && rh.primitive_idx == i) {
-            const double cos_x = std::max<double>(0.0, x_L.dot(n));
-            const double G = (cos_x * cos_light) / (dist * dist);
-
             switch(mode){
                 case 1: {
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__;
@@ -486,7 +481,7 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
                     const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
                     const Eigen::Vector3d halfVector = ((-1 * in_Ray.d) + x_L).normalized();
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
-                    const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__);
+                    const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 1) * pow(cosine, m) / (2.0f * __PI__);
                     I += area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
@@ -604,27 +599,19 @@ double Renderer::diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3
     out_ray.d = x_L;
     out_ray.prev_mesh_idx = rayHit.mesh_idx;
     out_ray.prev_primitive_idx = rayHit.primitive_idx;
-    out_ray.depth = depth + 1;
 
     return cos(theta) / __PI__;
 }
-double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth) {
-//    Eigen::Vector3d bn;
-//    const Eigen::Vector3d spec_dir = in_direction + 2 * in_n * in_n.dot(-1 * in_direction);
-//    if(abs(spec_dir.x()) > abs(spec_dir.y()))
-//        bn = Eigen::Vector3d(0, 1, 0).cross(spec_dir).normalized();
-//    else
-//        bn = Eigen::Vector3d(1, 0, 0).cross(spec_dir).normalized();
-
+double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m) {
     Eigen::Vector3d bn =
             in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].x()] -
             in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].z()];
+
     bn.normalize();
 
-//    const Eigen::Vector3d cn = bn.cross(spec_dir);
     const Eigen::Vector3d cn = bn.cross(in_n);
 
-    const double theta = acos(pow(randomMT(), 1.0f / (m + 1.0f)));
+    const double theta = acos(pow((1.0f - randomMT()), 1.0f / (m + 1.0f)));
     const double phi = randomMT() * 2.0 * __PI__;
 
     const double _dx = sin(theta) * cos(phi);
@@ -636,13 +623,11 @@ double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vect
 
     const Eigen::Vector3d o_parallel = (-1 * in_direction).dot(halfVector) * halfVector;
     const Eigen::Vector3d o_vertical = (-1 * in_direction) - o_parallel;
-//
+
     out_ray.o = in_x;
     out_ray.d = (o_parallel - o_vertical).normalized();
-//    out_ray.d = _dx * bn + _dy * spec_dir + _dz * cn;
     out_ray.prev_mesh_idx = rayHit.mesh_idx;
     out_ray.prev_primitive_idx = rayHit.primitive_idx;
-    out_ray.depth = depth + 1;
 
 
     if(out_ray.d.dot(in_n) < 0.0f)
