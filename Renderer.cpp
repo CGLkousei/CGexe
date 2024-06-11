@@ -393,7 +393,7 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
                 const double path_pdf = in_Ray.pdf;
                 const double nee_pdf = getLightProbability(in_AreaLights) * distance * distance / cosine;
                 const double MIS_weight = (path_pdf * path_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-
+//                const double MIS_weight = 0.0f;
                 return MIS_weight * in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
             }
         }
@@ -415,9 +415,9 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
     }
     else if(r < kd + ks){
         I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_Object, in_AreaLights, in_Hair, 2);
-        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
+        double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
         if(pdf < 0.0f)
-            return I;
+            pdf *= -1.0f;
         new_ray.pdf = pdf;
         const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
         I += computeMIS(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine) / ks;
@@ -513,6 +513,7 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
                     const double nee_pdf = (dist * dist) / (area * cos_light);
                     const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
 
+//                    const double MIS_weight = 1.0f;
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
@@ -526,6 +527,7 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
                     const double path_pdf = getBlinnPhongProbablitity(in_Ray.d, n, x_L, m);
                     const double nee_pdf = (dist * dist) / (area * cos_light);
                     const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                    const double MIS_weight = 1.0f;
 
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
@@ -613,8 +615,8 @@ double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vect
     out_ray.prev_mesh_idx = rayHit.mesh_idx;
     out_ray.prev_primitive_idx = rayHit.primitive_idx;
 
-    if(out_ray.d.dot(bn) < 0.0f)
-        return -1.0f;
+//    if(out_ray.d.dot(bn) < 0.0f)
+//        return -1.0f;
 
     return (m + 1) * pow(cos(theta), m) / (2.0f * __PI__);
 }

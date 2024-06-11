@@ -44,7 +44,7 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 3;
+int mode = 1;
 clock_t start_time;
 clock_t end_time;
 
@@ -74,7 +74,7 @@ void initAreaLights() {
     light1.arm_u = light1.arm_u * 0.7;
     light1.arm_v = light1.arm_v * 0.7;
     light1.color << 1.0, 1.0, 1.0;
-    light1.intensity = 30.0;
+    light1.intensity = 40.0;
 
 //    AreaLight light1;
 //    light1.pos << 1.2, 1.2, 1.2;
@@ -139,7 +139,8 @@ void changeMode(const unsigned int samples, const int limit, std::string filenam
         g_renderer.saveImg( directory + "/" + file_str);
         std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
 
-        mode++;
+//        mode++;
+        mode += 2;
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();
 
@@ -173,12 +174,12 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 1000;
+    unsigned int samples = 2000;
     unsigned int limit = 3;
     g_renderer.rendering(mode);
     updateFilm();
 
-    changeMode(samples, limit, "mis", "hair");
+    changeMode(samples, limit, "diffuse", "explain");
 
     glutPostRedisplay();
 }
@@ -214,7 +215,7 @@ void resize(int w, int h) {
 }
 
 int main(int argc, char *argv[]) {
-    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 5.0});
+    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 4.5});
     g_Camera.lookAt(Eigen::Vector3d{0.0, 0.5, 0.0}, Eigen::Vector3d{0.0, 1.0, 0.0});
     initAreaLights();
 
@@ -239,8 +240,8 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/hair.obj", g_Obj, g_Hair);
-    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
+    loadObj("../obj/room.obj", g_Obj, g_Hair);
+    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_Hair);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
