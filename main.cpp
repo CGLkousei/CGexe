@@ -126,7 +126,7 @@ void idle() {
     g_renderer.rendering(mode);
     updateFilm();
 
-    changeMode(samples, limit, "diffuse", "difference_sample");
+    changeMode(samples, limit, "specular", "after_job_hunting");
 
     glutPostRedisplay();
 }

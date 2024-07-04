@@ -575,15 +575,22 @@ double Renderer::diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3
     return cos(theta) / __PI__;
 }
 double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m) {
+//    Eigen::Vector3d bn;
+//    const Eigen::Vector3d spec_dir = in_direction + 2 * in_n * in_n.dot(-1 * in_direction);
+//    if(abs(spec_dir.x()) > abs(spec_dir.y()))
+//        bn = Eigen::Vector3d(0, 1, 0).cross(spec_dir).normalized();
+//    else
+//        bn = Eigen::Vector3d(1, 0, 0).cross(spec_dir).normalized();
+
     Eigen::Vector3d bn =
             in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].x()] -
             in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].z()];
-
     bn.normalize();
 
+//    const Eigen::Vector3d cn = bn.cross(spec_dir);
     const Eigen::Vector3d cn = bn.cross(in_n);
 
-    const double theta = acos(pow((1.0f - randomMT()), 1.0f / (m + 1.0f)));
+    const double theta = acos(pow(randomMT(), 1.0f / (m + 1.0f)));
     const double phi = randomMT() * 2.0 * __PI__;
 
     const double _dx = sin(theta) * cos(phi);
@@ -595,13 +602,15 @@ double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vect
 
     const Eigen::Vector3d o_parallel = (-1 * in_direction).dot(halfVector) * halfVector;
     const Eigen::Vector3d o_vertical = (-1 * in_direction) - o_parallel;
-
+//
     out_ray.o = in_x;
     out_ray.d = (o_parallel - o_vertical).normalized();
+//    out_ray.d = _dx * bn + _dy * spec_dir + _dz * cn;
     out_ray.prev_mesh_idx = rayHit.mesh_idx;
     out_ray.prev_primitive_idx = rayHit.primitive_idx;
 
-    if(out_ray.d.dot(bn) < 0.0f)
+
+    if(out_ray.d.dot(in_n) < 0.0f)
         return -1.0f;
 
     return (m + 1) * pow(cos(theta), m) / (2.0f * __PI__);
