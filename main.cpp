@@ -37,6 +37,9 @@ GLuint g_FilmTexture = 0;
 bool g_DrawFilm = true;
 
 int mode = 1;
+const int limit = 1;
+unsigned int samples = 50000;
+
 clock_t start_time;
 clock_t end_time;
 
@@ -121,8 +124,6 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 10000;
-    unsigned int limit = 3;
     g_renderer.rendering(mode);
     updateFilm();
 
