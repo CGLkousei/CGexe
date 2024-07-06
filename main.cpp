@@ -36,16 +36,19 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 2;
+int mode = 1;
 const int limit = 2;
-unsigned int samples = 10000;
+unsigned int samples = 5000;
+unsigned int nSamplesPerPixel = 5000;
+
+const std::string filename = "diffuse";
+const std::string directoryname = "after_job_hunting";
 
 clock_t start_time;
 clock_t end_time;
 
 int width = 640;
 int height = 480;
-int nSamplesPerPixel = 1;
 
 int g_MM_LIGHT_idx = 0;
 int mx, my;
@@ -127,7 +130,7 @@ void idle() {
     g_renderer.rendering(mode);
     updateFilm();
 
-    changeMode(samples, limit, "specular", "after_job_hunting");
+    changeMode(samples, limit, filename, directoryname);
 
     glutPostRedisplay();
 }
@@ -189,6 +192,8 @@ int main(int argc, char *argv[]) {
 
     initFilm();
     loadObj("../obj/room.obj", g_Obj);
+
+    g_renderer.setNsamples(nSamplesPerPixel);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

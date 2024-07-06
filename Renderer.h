@@ -30,7 +30,7 @@ public:
     float *g_AccumulationBuffer = nullptr;
     int *g_CountBuffer = nullptr;
     RayTracingInternalData g_RayTracingInternalData;
-    const int nSamplesPerPixel = 1;
+    int nSamplesPerPixel = 1;
 
     Camera g_Camera;
     std::vector<AreaLight> g_AreaLights;
@@ -40,6 +40,7 @@ public:
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
 
     void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights);
+    void setNsamples(const unsigned int samples);
 
     void resetFilm();
     void saveImg(const std::string filename);

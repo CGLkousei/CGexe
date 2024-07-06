@@ -34,6 +34,10 @@ void Renderer::set3Dscene(Camera camera, Object obj, std::vector<AreaLight> ligh
     g_CountBuffer = (int *) malloc(sizeof(int) * g_FilmWidth * g_FilmHeight);
 }
 
+void Renderer::setNsamples(const unsigned int samples) {
+    nSamplesPerPixel = samples;
+}
+
 void Renderer::resetFilm() {
     memset(g_AccumulationBuffer, 0, sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
     memset(g_CountBuffer, 0, sizeof(int) * g_FilmWidth * g_FilmHeight);
@@ -249,7 +253,6 @@ void Renderer::rendering(const int mode) {
             g_Camera.screenView(p_x, p_y, ray);
             ray.prev_mesh_idx = -99;
             ray.prev_primitive_idx = -1;
-
 
             switch(mode){
                 case 1: {
