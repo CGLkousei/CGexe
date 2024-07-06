@@ -36,9 +36,9 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 1;
-const int limit = 1;
-unsigned int samples = 50000;
+int mode = 2;
+const int limit = 2;
+unsigned int samples = 10000;
 
 clock_t start_time;
 clock_t end_time;

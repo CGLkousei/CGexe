@@ -336,18 +336,21 @@ Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object,
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
-
     const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
     const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
-    const double r = randomMT();
+    double r = randomMT() * (kd + ks);
 
-    if(r < kd){
+    if(r < kd)
         I += computeDirectLighting(in_Ray, in_RayHit, in_AreaLights, in_Object, 1);
+    else
+        I += computeDirectLighting(in_Ray, in_RayHit, in_AreaLights, in_Object, 2);
+
+    r = randomMT();
+    if(r < kd){
         diffuseSample(x, n, new_ray, in_RayHit, in_Object);
         I += computeNEE(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
     else if(r < kd + ks){
-        I += computeDirectLighting(in_Ray, in_RayHit, in_AreaLights, in_Object, 2);
         const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
         if(pdf < 0.0f)
             return I;
