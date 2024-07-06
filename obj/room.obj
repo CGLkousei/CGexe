@@ -1,6 +1,6 @@
 # Blender 4.1.1
 # www.blender.org
-mtllib ../obj/room_spec.mtl
+mtllib ../obj/room.mtl
 o mybox
 v -1.017427 -0.005008 -0.771211
 v -1.017427 0.564532 -0.771211
