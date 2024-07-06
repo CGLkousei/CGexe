@@ -38,8 +38,8 @@ bool g_DrawFilm = true;
 
 int mode = 1;
 const int limit = 2;
-unsigned int samples = 10;
-unsigned int nSamplesPerPixel = 1;
+unsigned int samples = 1000;
+unsigned int nSamplesPerPixel = 1000;
 bool save_flag = false;
 
 const std::string filename = "specular";
@@ -132,9 +132,11 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    g_renderer.rendering(mode);
-    g_renderer.updateFilm();
-    updateFilm();
+    if(!save_flag) {
+        g_renderer.rendering(mode);
+        g_renderer.updateFilm();
+        updateFilm();
+    }
 
     saveImg(limit, filename, directoryname);
     changeMode(samples, limit, filename, directoryname);
