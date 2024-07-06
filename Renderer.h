@@ -32,7 +32,7 @@ public:
     float *g_AccumulationBuffer = nullptr;
     int *g_CountBuffer = nullptr;
     RayTracingInternalData g_RayTracingInternalData;
-    const int nSamplesPerPixel = 1;
+    int nSamplesPerPixel = 1;
 
     Camera g_Camera;
     std::vector<AreaLight> g_AreaLights;
@@ -43,8 +43,10 @@ public:
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
 
     void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights, std::vector<ParticipatingMedia> media);
+    void setNsamples(const unsigned int nSample, const unsigned int samples);
 
     void resetFilm();
+    void updateFilm();
     void saveImg(const std::string filename);
     void clearRayTracedResult();
     void stepToNextPixel(RayTracingInternalData &io_data);
@@ -56,25 +58,9 @@ public:
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Ray &in_Ray, RayHit &io_Hit);
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<ParticipatingMedia> &all_medias, const Ray &in_Ray, RayHit &io_Hit);
 
-    void rendering();
     void rendering(const int mode);
 
-    Eigen::Vector3d sampleRandomPoint(const AreaLight &in_Light);
-
-    Eigen::Vector3d computeDirectLighting(const std::vector<AreaLight> &in_AreaLights, const Eigen::Vector3d &in_x,
-                                          const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                          const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material);
     Eigen::Vector3d computeRayHitNormal(const Object &in_Object, const RayHit &in_Hit);
-    Eigen::Vector3d computeDiffuseReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                             const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                             const std::vector<AreaLight> &in_AreaLights);
-    Eigen::Vector3d computeReflection(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                      const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                      const std::vector<AreaLight> &in_AreaLights);
-    Eigen::Vector3d computeRefraction(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                      const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                      const std::vector<AreaLight> &in_AreaLights);
-    Eigen::Vector3d computeShading(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
 
     Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
     Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
@@ -91,6 +77,7 @@ public:
     double getBlinnPhongProbability(const Eigen::Vector3d in_dir, const Eigen::Vector3d normal, const Eigen::Vector3d out_dir, const double m);
     double getPhaseProbability(const Eigen::Vector3d in_dir, const Eigen::Vector3d out_dir, const double hg_g);
 
+    Eigen::Vector3d sampleRandomPoint(const AreaLight &in_Light);
     double diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object);
     double blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m);
     double scatteringSaple(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_direction, Ray &out_ray, const int p_index, const double hg_g);

@@ -38,20 +38,22 @@ const int g_FilmWidth = 640;
 const int g_FilmHeight = 480;
 GLuint g_FilmTexture = 0;
 
-//RayTracingInternalData g_RayTracingInternalData;
-
 bool g_DrawFilm = true;
 
-int mode = 4;
+int mode = 1;
+const int limit = 2;
+const unsigned int samples = 10000;
+const unsigned int nSamplesPerPixel = 1;
+bool save_flag = false;
+
+const std::string filename = "specular";
+const std::string directoryname = "after_job_hunting";
+
 clock_t start_time;
 clock_t end_time;
 
 int width = 640;
 int height = 480;
-int nSamplesPerPixel = 1;
-
-int g_MM_LIGHT_idx = 0;
-int mx, my;
 
 double g_FrameSize_WindowSize_Scale_x = 1.0;
 double g_FrameSize_WindowSize_Scale_y = 1.0;
@@ -65,33 +67,16 @@ Object g_Obj;
 
 void initAreaLights() {
     AreaLight light1;
-    light1.pos << -1.2, 1.2, 1.2;
+    light1.pos << 0.0, 2.5, 0.0;
     light1.arm_u << 1.0, 0.0, 0.0;
     light1.arm_v = -light1.pos.cross(light1.arm_u);
     light1.arm_v.normalize();
-    light1.arm_u = light1.arm_u * 0.3;
-    light1.arm_v = light1.arm_v * 0.2;
-
-    //light1.color << 1.0, 0.8, 0.3;
+    light1.arm_u = light1.arm_u * 0.7;
+    light1.arm_v = light1.arm_v * 0.7;
     light1.color << 1.0, 1.0, 1.0;
-    //light1.intensity = 64.0;
-    light1.intensity = 48.0;
-
-    AreaLight light2;
-    light2.pos << 1.2, 1.2, 0.0;
-    light2.arm_u << 1.0, 0.0, 0.0;
-    light2.arm_v = -light2.pos.cross(light2.arm_u);
-    light2.arm_v.normalize();
-    light2.arm_u = light2.arm_u * 0.3;
-    light2.arm_v = light2.arm_v * 0.2;
-
-    //light2.color << 0.3, 0.3, 1.0;
-    light2.color << 1.0, 1.0, 1.0;
-    //light2.intensity = 64.0;
-    light2.intensity = 30.0;
+    light1.intensity = 40.0;
 
     g_AreaLights.push_back(light1);
-    g_AreaLights.push_back(light2);
 }
 void initParticipatingMedia(){
     ParticipatingMedia pm;
@@ -108,7 +93,12 @@ void initParticipatingMedia(){
 
 void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
+        save_flag = true;
         end_time = clock();
+    }
+}
+void saveImg(const int limit, std::string filename, std::string directory){
+    if(save_flag){
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
         std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
@@ -125,16 +115,15 @@ void changeMode(const unsigned int samples, const int limit, std::string filenam
         std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
 
         mode++;
-        g_renderer.resetFilm();
-        g_renderer.clearRayTracedResult();
-
         if(mode > limit)
             glutLeaveMainLoop();
 
+        g_renderer.resetFilm();
+        g_renderer.clearRayTracedResult();
+        save_flag = false;
         start_time = clock();
     }
 }
-
 
 void initFilm() {
     glGenTextures(1, &g_FilmTexture);
@@ -158,12 +147,14 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    unsigned int samples = 2000;
-    unsigned int limit = 4;
-    g_renderer.rendering(mode);
-    updateFilm();
+    if(!save_flag) {
+        g_renderer.rendering(mode);
+        g_renderer.updateFilm();
+        updateFilm();
+    }
 
-    changeMode(samples, limit, "diffuse", "ParticipatingMedia");
+    saveImg(limit, filename, directoryname);
+    changeMode(samples, limit, filename, directoryname);
 
     glutPostRedisplay();
 }
@@ -225,7 +216,9 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/room3.obj", g_Obj);
+    loadObj("../obj/room_twoblocks.obj", g_Obj);
+
+    g_renderer.setNsampoles(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
