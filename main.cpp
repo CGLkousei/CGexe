@@ -38,8 +38,8 @@ bool g_DrawFilm = true;
 
 int mode = 1;
 const int limit = 2;
-unsigned int samples = 5000;
-unsigned int nSamplesPerPixel = 5000;
+unsigned int samples = 1000;
+unsigned int nSamplesPerPixel = 1000;
 
 const std::string filename = "diffuse";
 const std::string directoryname = "after_job_hunting";
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
     initFilm();
     loadObj("../obj/room.obj", g_Obj);
 
-    g_renderer.setNsamples(nSamplesPerPixel);
+    g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

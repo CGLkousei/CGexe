@@ -40,7 +40,7 @@ public:
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
 
     void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights);
-    void setNsamples(const unsigned int samples);
+    void setNsamples(const unsigned int nSample, const unsigned int samples);
 
     void resetFilm();
     void saveImg(const std::string filename);
