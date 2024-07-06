@@ -38,10 +38,11 @@ bool g_DrawFilm = true;
 
 int mode = 1;
 const int limit = 2;
-unsigned int samples = 1000;
-unsigned int nSamplesPerPixel = 1000;
+unsigned int samples = 10;
+unsigned int nSamplesPerPixel = 1;
+bool save_flag = false;
 
-const std::string filename = "diffuse";
+const std::string filename = "specular";
 const std::string directoryname = "after_job_hunting";
 
 clock_t start_time;
@@ -77,7 +78,12 @@ void initAreaLights() {
 }
 void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
+        save_flag = true;
         end_time = clock();
+    }
+}
+void saveImg(const int limit, std::string filename, std::string directory){
+    if(save_flag){
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
         std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
@@ -94,16 +100,15 @@ void changeMode(const unsigned int samples, const int limit, std::string filenam
         std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
 
         mode++;
-        g_renderer.resetFilm();
-        g_renderer.clearRayTracedResult();
-
         if(mode > limit)
             glutLeaveMainLoop();
 
+        g_renderer.resetFilm();
+        g_renderer.clearRayTracedResult();
+        save_flag = false;
         start_time = clock();
     }
 }
-
 
 void initFilm() {
     glGenTextures(1, &g_FilmTexture);
@@ -128,8 +133,10 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     g_renderer.rendering(mode);
+    g_renderer.updateFilm();
     updateFilm();
 
+    saveImg(limit, filename, directoryname);
     changeMode(samples, limit, filename, directoryname);
 
     glutPostRedisplay();

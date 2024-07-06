@@ -43,6 +43,7 @@ public:
     void setNsamples(const unsigned int nSample, const unsigned int samples);
 
     void resetFilm();
+    void updateFilm();
     void saveImg(const std::string filename);
     void clearRayTracedResult();
     void stepToNextPixel(RayTracingInternalData &io_data);

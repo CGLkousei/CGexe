@@ -52,8 +52,7 @@ void Renderer::resetFilm() {
     memset(g_AccumulationBuffer, 0, sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
     memset(g_CountBuffer, 0, sizeof(int) * g_FilmWidth * g_FilmHeight);
 }
-
-void Renderer::saveImg(const std::string filename) {
+void Renderer::updateFilm() {
     for (int i = 0; i < g_FilmWidth * g_FilmHeight; i++) {
         if (g_CountBuffer[i] > 0) {
             g_FilmBuffer[i * 3] = g_AccumulationBuffer[i * 3] / g_CountBuffer[i];
@@ -66,7 +65,9 @@ void Renderer::saveImg(const std::string filename) {
             g_FilmBuffer[i * 3 + 2] = 0.0;
         }
     }
+}
 
+void Renderer::saveImg(const std::string filename) {
     GLubyte *g_ImgBuffer = new GLubyte[g_FilmWidth * g_FilmHeight * 3];
 
     glReadBuffer(GL_FRONT);
@@ -284,10 +285,6 @@ void Renderer::rendering(const int mode) {
         g_AccumulationBuffer[pixel_flat_idx * 3 + 1] += I.y();
         g_AccumulationBuffer[pixel_flat_idx * 3 + 2] += I.z();
         g_CountBuffer[pixel_flat_idx] += nSamplesPerPixel;
-
-        g_FilmBuffer[i * 3] = g_AccumulationBuffer[i * 3] / g_CountBuffer[i];
-        g_FilmBuffer[i * 3 + 1] = g_AccumulationBuffer[i * 3 + 1] / g_CountBuffer[i];
-        g_FilmBuffer[i * 3 + 2] = g_AccumulationBuffer[i * 3 + 2] / g_CountBuffer[i];
     }
 }
 
