@@ -38,8 +38,8 @@ bool g_DrawFilm = true;
 
 int mode = 1;
 const int limit = 2;
-unsigned int samples = 1000;
-unsigned int nSamplesPerPixel = 1000;
+unsigned int samples = 10000;
+unsigned int nSamplesPerPixel = 10000;
 bool save_flag = false;
 
 const std::string filename = "specular";

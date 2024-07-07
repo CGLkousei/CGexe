@@ -445,6 +445,9 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
         n_light.normalize();
         const double cos_light = n_light.dot(-x_L);
         if (cos_light <= 0.0) continue;
+        const double cos_x = n.dot(x_L);
+        if(cos_x <= 0.0) continue;
+        const double G = (cos_x * cos_light) / (dist * dist);
 
         // shadow test
         Ray ray;
@@ -455,8 +458,7 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
         RayHit rh;
         rayTracing(in_Object, in_AreaLights, ray, rh);
         if (rh.mesh_idx < 0 && rh.primitive_idx == i) {
-            const double cos_x = std::max<double>(0.0, x_L.dot(n));
-            const double G = (cos_x * cos_light) / (dist * dist);
+//            const double cos_x = std::max<double>(0.0, x_L.dot(n));
 
             switch(mode){
                 case 1: {
