@@ -38,12 +38,12 @@ bool g_DrawFilm = true;
 
 int mode = 1;
 const int limit = 2;
-unsigned int samples = 10000;
-unsigned int nSamplesPerPixel = 10000;
+unsigned int samples = 1000;
+unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
-const std::string filename = "specular";
-const std::string directoryname = "after_job_hunting";
+const std::string filename = "mode";
+const std::string directoryname = "verification";
 
 clock_t start_time;
 clock_t end_time;
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/room.obj", g_Obj);
+    loadObj("../obj/room_twoblocks.obj", g_Obj);
 
     g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);

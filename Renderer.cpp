@@ -9,6 +9,7 @@
 
 #define __FAR__ 1.0e33
 #define __PI__ 	3.14159265358979323846
+#define MAX_RAY_DEPTH INT_MAX
 
 Renderer::Renderer() {
     g_FilmBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
@@ -260,7 +261,7 @@ void Renderer::rendering(const int mode) {
             double p_x = (g_RayTracingInternalData.nextPixel_i + randomMT()) / g_FilmWidth;
             double p_y = (g_RayTracingInternalData.nextPixel_j + randomMT()) / g_FilmHeight;
 
-            Ray ray;
+            Ray ray; ray.depth = 0;
             g_Camera.screenView(p_x, p_y, ray);
             ray.prev_mesh_idx = -99;
             ray.prev_primitive_idx = -1;
@@ -289,6 +290,9 @@ void Renderer::rendering(const int mode) {
 }
 
 Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights) {
+    if(in_Ray.depth > MAX_RAY_DEPTH)
+        return Eigen::Vector3d::Zero();
+
     Ray new_ray; RayHit in_RayHit;
     rayTracing(in_Object, in_AreaLights, in_Ray, in_RayHit);
 
@@ -313,12 +317,12 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
     const double r = randomMT();
 
     if(r < kd){
-        diffuseSample(x, n, new_ray, in_RayHit, in_Object);
+        diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
         I += computePathTrace(new_ray, in_Object, in_AreaLights).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
     else if(r < kd + ks){
         const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
-        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m);
+        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m, in_Ray.depth);
         if(pdf < 0.0f)
             return I;
         const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
@@ -329,6 +333,9 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
 }
 
 Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first) {
+    if(in_Ray.depth >= MAX_RAY_DEPTH)
+        return Eigen::Vector3d::Zero();
+
     Ray new_ray; RayHit in_RayHit;
     rayTracing(in_Object, in_AreaLights, in_Ray, in_RayHit);
 
@@ -358,12 +365,12 @@ Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object,
 
     r = randomMT();
     if(r < kd){
-        diffuseSample(x, n, new_ray, in_RayHit, in_Object);
+        diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
         I += computeNEE(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
     else if(r < kd + ks){
         const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
-        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m);
+        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m, in_Ray.depth);
         if(pdf < 0.0f)
             return I;
         const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
@@ -412,13 +419,13 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
 
     if(r < kd){
         I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, in_Object, 1);
-        const double pdf = diffuseSample(x, n, new_ray, in_RayHit, in_Object);
+        const double pdf = diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
         new_ray.pdf = pdf;
         I += computeMIS(new_ray, in_Object, in_AreaLights, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
     else if(r < kd + ks){
         I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, in_Object, 2);
-        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m);
+        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, in_Object.meshes[in_RayHit.mesh_idx].material.m, in_Ray.depth);
         if(pdf < 0.0f)
             return I;
         new_ray.pdf = pdf;
@@ -445,9 +452,6 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
         n_light.normalize();
         const double cos_light = n_light.dot(-x_L);
         if (cos_light <= 0.0) continue;
-        const double cos_x = n.dot(x_L);
-        if(cos_x <= 0.0) continue;
-        const double G = (cos_x * cos_light) / (dist * dist);
 
         // shadow test
         Ray ray;
@@ -458,7 +462,8 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
         RayHit rh;
         rayTracing(in_Object, in_AreaLights, ray, rh);
         if (rh.mesh_idx < 0 && rh.primitive_idx == i) {
-//            const double cos_x = std::max<double>(0.0, x_L.dot(n));
+            const double cos_x = std::max<double>(0.0, x_L.dot(n));
+            const double G = (cos_x * cos_light) / (dist * dist);
 
             switch(mode){
                 case 1: {
@@ -566,7 +571,7 @@ double Renderer::getBlinnPhongProbablitity(const Eigen::Vector3d in_dir, const E
     return (m + 1) * pow(cosine, m) / (2.0 * __PI__);
 }
 
-double Renderer::diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object) {
+double Renderer::diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const int depth) {
     Eigen::Vector3d bn =
             in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].x()] -
             in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].z()];
@@ -588,10 +593,11 @@ double Renderer::diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3
     out_ray.d = x_L;
     out_ray.prev_mesh_idx = rayHit.mesh_idx;
     out_ray.prev_primitive_idx = rayHit.primitive_idx;
+    out_ray.depth = depth + 1;
 
     return cos(theta) / __PI__;
 }
-double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m) {
+double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth) {
 //    Eigen::Vector3d bn;
 //    const Eigen::Vector3d spec_dir = in_direction + 2 * in_n * in_n.dot(-1 * in_direction);
 //    if(abs(spec_dir.x()) > abs(spec_dir.y()))
@@ -625,6 +631,7 @@ double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vect
 //    out_ray.d = _dx * bn + _dy * spec_dir + _dz * cn;
     out_ray.prev_mesh_idx = rayHit.mesh_idx;
     out_ray.prev_primitive_idx = rayHit.primitive_idx;
+    out_ray.depth = depth + 1;
 
 
     if(out_ray.d.dot(in_n) < 0.0f)
