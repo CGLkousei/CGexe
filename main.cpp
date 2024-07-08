@@ -22,7 +22,6 @@
 
 #define _USE_MATH_DEFINES
 
-#include <math.h>
 #include <vector>
 #include <iostream>
 #include <filesystem>
@@ -31,7 +30,6 @@
 #include "TriMesh.h"
 #include "GLPreview.h"
 #include "Renderer.h"
-#include "ParticipatingMedia.h"
 
 
 const int g_FilmWidth = 640;
@@ -40,14 +38,14 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 1;
-const int limit = 2;
-const unsigned int samples = 10000;
-const unsigned int nSamplesPerPixel = 1;
+int mode = 4;
+const int limit = 4;
+const unsigned int samples = 400;
+const unsigned int nSamplesPerPixel = 50;
 bool save_flag = false;
 
-const std::string filename = "specular";
-const std::string directoryname = "after_job_hunting";
+const std::string filename = "mis";
+const std::string directoryname = "participating";
 
 clock_t start_time;
 clock_t end_time;
@@ -91,38 +89,36 @@ void initParticipatingMedia(){
     g_ParticipatingMedia.push_back(pm);
 }
 
-void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
+void changeMode(const unsigned int samples){
     if(g_renderer.g_CountBuffer[0] >= samples){
         save_flag = true;
         end_time = clock();
     }
 }
 void saveImg(const int limit, std::string filename, std::string directory){
-    if(save_flag){
-        const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
-        std::string time_str = std::to_string(static_cast<int>(rendering_time));
-        std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+    const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
+    std::string time_str = std::to_string(static_cast<int>(rendering_time));
+    std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
-        //make the directory
-        if(!std::filesystem::exists(directory)){
-            if(!std::filesystem::create_directories(directory)){
-                std::cerr << "Failed to create directory: " << directory << std::endl;
-                return;
-            }
+    //make the directory
+    if(!std::filesystem::exists(directory)){
+        if(!std::filesystem::create_directories(directory)){
+            std::cerr << "Failed to create directory: " << directory << std::endl;
+            return;
         }
-
-        g_renderer.saveImg( directory + "/" + file_str);
-        std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
-
-        mode++;
-        if(mode > limit)
-            glutLeaveMainLoop();
-
-        g_renderer.resetFilm();
-        g_renderer.clearRayTracedResult();
-        save_flag = false;
-        start_time = clock();
     }
+
+    g_renderer.saveImg( directory + "/" + file_str);
+    std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
+
+    mode++;
+    if(mode > limit)
+        glutLeaveMainLoop();
+
+    g_renderer.resetFilm();
+    g_renderer.clearRayTracedResult();
+    save_flag = false;
+    start_time = clock();
 }
 
 void initFilm() {
@@ -152,9 +148,10 @@ void idle() {
         g_renderer.updateFilm();
         updateFilm();
     }
-
-    saveImg(limit, filename, directoryname);
-    changeMode(samples, limit, filename, directoryname);
+    else{
+        saveImg(limit, filename, directoryname);
+    }
+    changeMode(samples);
 
     glutPostRedisplay();
 }
@@ -190,7 +187,7 @@ void resize(int w, int h) {
 }
 
 int main(int argc, char *argv[]) {
-    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 5.0});
+    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 4.5});
     g_Camera.lookAt(Eigen::Vector3d{0.0, 0.5, 0.0}, Eigen::Vector3d{0.0, 1.0, 0.0});
     initAreaLights();
     initParticipatingMedia();
@@ -218,7 +215,7 @@ int main(int argc, char *argv[]) {
     initFilm();
     loadObj("../obj/room_twoblocks.obj", g_Obj);
 
-    g_renderer.setNsampoles(nSamplesPerPixel, samples);
+    g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

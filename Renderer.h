@@ -8,7 +8,6 @@
 #include "Camera.h"
 #include "Light.h"
 #include "TriMesh.h"
-#include "ParticipatingMedia.h"
 
 struct RayTracingInternalData {
     int nextPixel_i;
@@ -21,7 +20,6 @@ struct RayHit {
     int mesh_idx; // < -1: no intersection, -1: area light, >= 0: object_mesh
     int primitive_idx; // < 0: no intersection
     bool isFront;
-    bool isPM;
 };
 
 class Renderer {
@@ -53,7 +51,6 @@ public:
 
     void rayTriangleIntersect(const TriMesh &in_Mesh, const int in_Triangle_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights, const int in_Light_idx, const Ray &in_Ray, RayHit &out_Result);
-    void rayMediaIntersect(const std::vector<ParticipatingMedia> &all_medias, const int in_idx, const Ray &in_Ray, RayHit &out_Result);
 
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Ray &in_Ray, RayHit &io_Hit);
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<ParticipatingMedia> &all_medias, const Ray &in_Ray, RayHit &io_Hit);
@@ -66,7 +63,7 @@ public:
     Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
     Eigen::Vector3d computeMIS(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
 
-    Eigen::Vector3d computeMIS_PM(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<ParticipatingMedia> &all_media, bool first);
+    Eigen::Vector3d computeMIS(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<ParticipatingMedia> &all_media, bool first);
 
     Eigen::Vector3d computeDirectLighting(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights,const Object &in_Object, const int mode);
     Eigen::Vector3d computeDirectLighting_MIS(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const Object &in_Object, const int mode);

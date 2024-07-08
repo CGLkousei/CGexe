@@ -54,6 +54,16 @@ struct Object {
     std::vector<TriMesh> meshes;
 };
 
+struct ParticipatingMedia {
+    Eigen::Vector3d pos;
+    Eigen::Vector3d color;
+
+    double radius;
+    double extinction;
+    double albedo;
+    double hg_g;
+};
+
 void resetMesh(TriMesh &io_Mesh);
 
 void printMesh(const TriMesh &in_Mesh);
