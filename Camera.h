@@ -20,6 +20,7 @@ struct Ray {
     int prev_mesh_idx;
     int prev_primitive_idx;
     double pdf;
+    int depth
 };
 
 class Camera {

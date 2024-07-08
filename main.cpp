@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  gl3d_hello_world
-//
-//  Created by Yonghao Yue on 2019/09/28.
-//  Copyright © 2019 Yonghao Yue. All rights reserved.
-//
-
 #define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 #define EIGEN_DONT_VECTORIZE
 
@@ -22,13 +14,17 @@
 
 #define _USE_MATH_DEFINES
 
+#include <math.h>
 #include <vector>
 #include <iostream>
 #include <filesystem>
 
 #include "Camera.h"
+#include "Jpeg.h"
 #include "TriMesh.h"
 #include "GLPreview.h"
+#include "random.h"
+#include "Image.h"
 #include "Renderer.h"
 
 
@@ -36,16 +32,18 @@ const int g_FilmWidth = 640;
 const int g_FilmHeight = 480;
 GLuint g_FilmTexture = 0;
 
+//RayTracingInternalData g_RayTracingInternalData;
+
 bool g_DrawFilm = true;
 
-int mode = 4;
-const int limit = 4;
-const unsigned int samples = 400;
-const unsigned int nSamplesPerPixel = 50;
+int mode = 1;
+const int limit = 2;
+unsigned int samples = 1000;
+unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
-const std::string filename = "mis";
-const std::string directoryname = "participating";
+const std::string filename = "mode";
+const std::string directoryname = "verification";
 
 clock_t start_time;
 clock_t end_time;
@@ -53,13 +51,15 @@ clock_t end_time;
 int width = 640;
 int height = 480;
 
+int g_MM_LIGHT_idx = 0;
+int mx, my;
+
 double g_FrameSize_WindowSize_Scale_x = 1.0;
 double g_FrameSize_WindowSize_Scale_y = 1.0;
 
 Camera g_Camera;
 Renderer g_renderer;
 std::vector<AreaLight> g_AreaLights;
-std::vector<ParticipatingMedia> g_ParticipatingMedia;
 
 Object g_Obj;
 
@@ -76,49 +76,38 @@ void initAreaLights() {
 
     g_AreaLights.push_back(light1);
 }
-void initParticipatingMedia(){
-    ParticipatingMedia pm;
-    pm.pos << 0.0f, 0.0f, 0.0f;
-    pm.color << 0.68f, 0.68f, 0.68f;
-
-    pm.radius = 10.0f;
-    pm.extinction = 0.5;
-    pm.albedo = 0.95;
-    pm.hg_g = 0.95;
-
-    g_ParticipatingMedia.push_back(pm);
-}
-
-void changeMode(const unsigned int samples){
+void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
         save_flag = true;
         end_time = clock();
     }
 }
 void saveImg(const int limit, std::string filename, std::string directory){
-    const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
-    std::string time_str = std::to_string(static_cast<int>(rendering_time));
-    std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+    if(save_flag){
+        const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
+        std::string time_str = std::to_string(static_cast<int>(rendering_time));
+        std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
-    //make the directory
-    if(!std::filesystem::exists(directory)){
-        if(!std::filesystem::create_directories(directory)){
-            std::cerr << "Failed to create directory: " << directory << std::endl;
-            return;
+        //make the directory
+        if(!std::filesystem::exists(directory)){
+            if(!std::filesystem::create_directories(directory)){
+                std::cerr << "Failed to create directory: " << directory << std::endl;
+                return;
+            }
         }
+
+        g_renderer.saveImg( directory + "/" + file_str);
+        std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
+
+        mode++;
+        if(mode > limit)
+            glutLeaveMainLoop();
+
+        g_renderer.resetFilm();
+        g_renderer.clearRayTracedResult();
+        save_flag = false;
+        start_time = clock();
     }
-
-    g_renderer.saveImg( directory + "/" + file_str);
-    std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
-
-    mode++;
-    if(mode > limit)
-        glutLeaveMainLoop();
-
-    g_renderer.resetFilm();
-    g_renderer.clearRayTracedResult();
-    save_flag = false;
-    start_time = clock();
 }
 
 void initFilm() {
@@ -148,10 +137,9 @@ void idle() {
         g_renderer.updateFilm();
         updateFilm();
     }
-    else{
-        saveImg(limit, filename, directoryname);
-    }
-    changeMode(samples);
+
+    saveImg(limit, filename, directoryname);
+    changeMode(samples, limit, filename, directoryname);
 
     glutPostRedisplay();
 }
@@ -190,7 +178,6 @@ int main(int argc, char *argv[]) {
     g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 4.5});
     g_Camera.lookAt(Eigen::Vector3d{0.0, 0.5, 0.0}, Eigen::Vector3d{0.0, 1.0, 0.0});
     initAreaLights();
-    initParticipatingMedia();
 
     glutInit(&argc, argv);
     glutInitWindowSize(width, height);
@@ -216,7 +203,7 @@ int main(int argc, char *argv[]) {
     loadObj("../obj/room_twoblocks.obj", g_Obj);
 
     g_renderer.setNsamples(nSamplesPerPixel, samples);
-    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia);
+    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
