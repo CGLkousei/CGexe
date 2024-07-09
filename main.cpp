@@ -36,14 +36,14 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 1;
-const int limit = 2;
-unsigned int samples = 1000;
-unsigned int nSamplesPerPixel = 1;
+int mode = 5;
+const int limit = 5;
+unsigned int samples = 10000;
+unsigned int nSamplesPerPixel = 10;
 bool save_flag = false;
 
 const std::string filename = "mode";
-const std::string directoryname = "verification";
+const std::string directoryname = "participating2";
 
 clock_t start_time;
 clock_t end_time;
@@ -60,6 +60,7 @@ double g_FrameSize_WindowSize_Scale_y = 1.0;
 Camera g_Camera;
 Renderer g_renderer;
 std::vector<AreaLight> g_AreaLights;
+std::vector<ParticipatingMedia> g_ParticipatingMedia;
 
 Object g_Obj;
 
@@ -75,6 +76,17 @@ void initAreaLights() {
     light1.intensity = 40.0;
 
     g_AreaLights.push_back(light1);
+}
+void initParticipatingMedias(){
+    ParticipatingMedia pm;
+    pm.pos << 0.0f, 0.0f, 0.0f;
+    pm.color << 0.78f, 0.78f, 0.78f;
+    pm.radius = 10.0f;
+    pm.extinction = 0.45;
+    pm.albedo = 0.9;
+    pm.hg_g = 0.9;
+
+    g_ParticipatingMedia.push_back(pm);
 }
 void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
@@ -178,6 +190,7 @@ int main(int argc, char *argv[]) {
     g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 4.5});
     g_Camera.lookAt(Eigen::Vector3d{0.0, 0.5, 0.0}, Eigen::Vector3d{0.0, 1.0, 0.0});
     initAreaLights();
+    initParticipatingMedias();
 
     glutInit(&argc, argv);
     glutInitWindowSize(width, height);
@@ -203,7 +216,7 @@ int main(int argc, char *argv[]) {
     loadObj("../obj/room_twoblocks.obj", g_Obj);
 
     g_renderer.setNsamples(nSamplesPerPixel, samples);
-    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
+    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 

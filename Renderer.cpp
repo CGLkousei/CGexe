@@ -517,7 +517,7 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         return Eigen::Vector3d::Zero();
 
     Ray new_ray; RayHit in_RayHit;
-    rayTracing(in_Object, in_AreaLights, in_Ray, in_RayHit);
+    rayTracing(in_Object, in_AreaLights, all_media, in_Ray, in_RayHit);
 
     if(in_RayHit.primitive_idx < 0)
         return Eigen::Vector3d::Zero();
@@ -537,14 +537,14 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         const Eigen::Vector3d n =  in_Ray.d;
 
         const int p_index = in_RayHit.primitive_idx;
-        ParticipatingMedia p = all_media[p_index];
-        const double albedo = p.albedo;
+        ParticipatingMedia *p = &all_media[p_index];
+        const double albedo = p->albedo;
         const double r = randomMT();
-        if(r >= p.albedo)
+        if(r >= albedo)
             return Eigen::Vector3d::Zero();
 
-        scatteringSaple(x, in_Ray.d, new_ray, p_index, p.hg_g, in_Ray.depth);
-        I += computePathTrace(new_ray, in_Object, in_AreaLights, all_media).cwiseProduct(p.color) / albedo;
+        scatteringSaple(x, in_Ray.d, new_ray, p_index, p->hg_g, in_Ray.depth);
+        I += computePathTrace(new_ray, in_Object, in_AreaLights, all_media).cwiseProduct(p->color) / albedo;
     }
     else{
         const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
@@ -591,7 +591,8 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
                 const double distance = (x - in_Ray.o).norm();
                 const double path_pdf = in_Ray.pdf;
                 const double nee_pdf = getLightProbability(in_AreaLights) * distance * distance / cosine;
-                const double MIS_weight = (path_pdf * path_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                const double MIS_weight = (path_pdf * path_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+                const double MIS_weight = 1.0f;
 
                 return MIS_weight * in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
             }
@@ -600,34 +601,33 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
     }
 
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
-    Eigen::Vector3d n = in_Ray.d;
-    if(in_RayHit.mesh_idx != 0)
-        n = computeRayHitNormal(in_Object, in_RayHit);
 
     if(in_RayHit.mesh_idx == 0){
         //participating media
-        I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, all_media, in_Object, 0);
+//        I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, all_media, in_Object, 0);
 
         const int p_index = in_RayHit.primitive_idx;
-        ParticipatingMedia p = all_media[p_index];
-        const double albedo = p.albedo;
-        const double p_random = randomMT();
-        if(p_random >= p.albedo)
+        ParticipatingMedia *p = &all_media[p_index];
+        const double albedo = p->albedo;
+        const double r = randomMT();
+        if(r >= albedo)
             return Eigen::Vector3d::Zero();
 
-        const double pdf = scatteringSaple(x, in_Ray.d, new_ray, p_index, p.hg_g, in_Ray.depth);
+        const double pdf = scatteringSaple(x, in_Ray.d, new_ray, p_index, p->hg_g, in_Ray.depth);
         new_ray.pdf = pdf;
-        I += computeMIS(new_ray, in_Object, in_AreaLights, all_media, false).cwiseProduct(p.color) / albedo;
+        I += computeMIS(new_ray, in_Object, in_AreaLights, all_media, false).cwiseProduct(p->color) / albedo;
     }
     else{
+        const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
+
         const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
         const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
         double r = randomMT() * (kd + ks);
 
-        if(r < kd)
-            I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, all_media, in_Object, 1);
-        else if(r < kd + ks)
-            I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, all_media, in_Object, 2);
+//        if(r < kd)
+//            I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, all_media, in_Object, 1);
+//        else if(r < kd + ks)
+//            I += computeDirectLighting_MIS(in_Ray, in_RayHit, in_AreaLights, all_media, in_Object, 2);
 
         r = randomMT();
 
@@ -795,25 +795,22 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
             const double cos_x = n.dot(x_L);
             if (cos_x <= 0.0) continue;
             const double G = (cos_x * cos_light) / (distance * distance);
+            const double nee_pdf = (distance * distance) / (area * cos_light);
 
             switch(mode){
                 case 0:{
                     const double path_pdf = getPhaseProbability(in_Ray.d, x_L, all_medias[p_index].hg_g);
                     const Eigen::Vector3d BSDF = all_medias[p_index].color * path_pdf;  //pdfがBSDFに相当
 
-                    const double nee_pdf = (distance * distance) / (area * cos_light);
                     const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
                 case 1: {
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__;
-
                     const double path_pdf = getDiffuseProbability(n, x_L);
-                    const double nee_pdf = (distance * distance) / (area * cos_light);
-                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
 
+                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
@@ -823,18 +820,14 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
                     const Eigen::Vector3d halfVector = ((-1 * in_Ray.d) + x_L).normalized();
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__);
-
                     const double path_pdf = getBlinnPhongProbability(in_Ray.d, n, x_L, m);
-                    const double nee_pdf = (distance * distance) / (area * cos_light);
                     const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
             }
         }
     }
-
     return I;
 }
 
@@ -981,14 +974,13 @@ double Renderer::getFreePath(const std::vector<ParticipatingMedia> &all_medias, 
         if(!isInParticipatingMedia(all_medias[i], in_point))
             continue;
 
-        double s = DBL_MAX;
         double extinction = all_medias[i].extinction;
-        if(extinction > 1e-6)
-            s = -log(randomMT()) / extinction;
-
-        if(s_min > s){
-            s_min = s;
-            index = i;
+        if(extinction > 1e-6) {
+            const double s = - log(randomMT()) / extinction;
+            if(s_min > s){
+                s_min = s;
+                index = i;
+            }
         }
     }
 
