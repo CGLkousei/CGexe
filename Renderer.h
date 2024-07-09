@@ -21,6 +21,14 @@ struct RayHit {
     int primitive_idx; // < 0: no intersection
     bool isFront;
 };
+struct SubPath {
+    Eigen::Vector3d x;
+    Eigen::Vector3d in_dir;
+    Eigen::Vector3d contribute;
+    Eigen::Vector3d radiance;
+    RayHit rh;
+    int materialMode;
+};
 
 class Renderer {
 public:
@@ -36,6 +44,7 @@ public:
     std::vector<AreaLight> g_AreaLights;
     std::vector<ParticipatingMedia> g_ParticipatingMedia;
     Object g_Obj;
+    std::vector<SubPath> g_SubPath;
 
     Renderer();
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
@@ -62,6 +71,7 @@ public:
     Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
     Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
     Eigen::Vector3d computeMIS(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
+    Eigen::Vector3d computeBPT(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, bool first);
 
     Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<ParticipatingMedia> &all_media);
     Eigen::Vector3d computeMIS(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<ParticipatingMedia> &all_media, bool first);
@@ -79,9 +89,15 @@ public:
     double diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const int depth);
     double blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth);
     double scatteringSaple(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_direction, Ray &out_ray, const int p_index, const double hg_g, const int depth);
+    double HemisphericSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const int light_index);
 
     bool isInParticipatingMedia(const ParticipatingMedia &media, const Eigen::Vector3d &in_point);
     double getFreePath(const std::vector<ParticipatingMedia> &all_medias, const Eigen::Vector3d &in_point, int &index);
+
+    Eigen::Vector3d BidirectinalPathTrace(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const Object &in_Object, const std::vector<SubPath> &in_SubPath, const int mode);
+    void LightTracing(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<SubPath> &in_subpath);
+    Eigen::Vector3d setRadiance(const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, const int index, const int light_index);
+    Eigen::Vector3d calcGeometry(const Eigen::Vector3d &dir, const Object &in_Object, const std::vector<SubPath> &in_SubPath, const int index);
 };
 
 
