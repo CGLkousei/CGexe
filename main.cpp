@@ -61,11 +61,15 @@ std::vector<ParticipatingMedia> g_ParticipatingMedia;
 
 Object g_Obj;
 
-void PrintCurrentTime(){
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+void printCurrentTime(){
+    try {
+        auto now = std::chrono::system_clock::now();
+        std::time_t now_time = std::chrono::system_clock::to_time_t(now);
 
-    std::cout << "Current time is " << std::ctime(&now_time) << std::endl;
+        std::cout << "Current time is " << std::ctime(&now_time) << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "error occurred in printCurrentTime(): " << e.what() << std::endl;
+    }
 }
 
 void initAreaLights() {
@@ -122,7 +126,7 @@ void saveImg(const int limit, std::string filename, std::string directory){
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();
         save_flag = false;
-        PrintCurrentTime();
+        printCurrentTime();
         start_time = clock();
     }
 }
@@ -225,7 +229,7 @@ int main(int argc, char *argv[]) {
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-    PrintCurrentTime();
+    printCurrentTime();
     start_time = clock();
 
     glutMainLoop();

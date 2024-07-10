@@ -348,7 +348,7 @@ void Renderer::rendering(const int mode) {
                 case 6: {
                     int light_index = static_cast<int>(randomMT() * g_AreaLights.size());
                     if(light_index == g_AreaLights.size()){
-                        std::cerr << "light_index gets over g_AreaLights.size()" << std::endl;
+//                        std::cerr << "light_index gets over g_AreaLights.size()" << std::endl;
                         light_index--;
                     }
 
