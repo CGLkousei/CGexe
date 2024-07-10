@@ -365,6 +365,7 @@ void Renderer::rendering(const int mode) {
                     }
 
                     I += computeBPT(ray, g_Obj, g_AreaLights, g_SubPath, true);
+                    break;
                 }
             }
         }
@@ -1113,6 +1114,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
         _ray.prev_mesh_idx = in_RayHit.mesh_idx;
         _ray.prev_primitive_idx = in_RayHit.primitive_idx;
         RayHit _rh;
+
         rayTracing(in_Object, in_AreaLights, _ray, _rh);
         if(_rh.mesh_idx == in_SubPath[i].rh.mesh_idx && _rh.primitive_idx == in_SubPath[i].rh.primitive_idx){
             //接続が成功
@@ -1121,7 +1123,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
 
             switch(mode){
                 case 1: {
-                    const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, 1));
+                    const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
                     const double pdf = getDiffuseProbability(n, connect_dir);
                     I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF * cos_x / pdf);
                     break;
@@ -1131,7 +1133,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                     const Eigen::Vector3d halfVector = ((-1 * in_Ray.d) + connect_dir).normalized();
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
 
-                    const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__)).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, 2));
+                    const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__)).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
                     const double pdf = getBlinnPhongProbability(in_Ray.d, n, connect_dir, m);
                     I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF * cos_x / pdf);
                     break;
@@ -1154,6 +1156,11 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
     rayTracing(in_Object, in_AreaLights, in_Ray, in_RayHit);
 
     if(in_RayHit.primitive_idx < 0){
+        in_subpath.resize(depth);
+        return;
+    }
+
+    if(in_RayHit.mesh_idx == -1){
         in_subpath.resize(depth);
         return;
     }
@@ -1187,6 +1194,10 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
         in_subpath[depth].contribute = in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f) / (ks * (m + 1.0f));
         in_subpath[depth].materialMode = 2;
     }
+    else{
+        in_subpath.resize(depth);
+        return;
+    }
 
     in_subpath[depth].in_dir = in_Ray.d;
     in_subpath[depth].x = new_ray.o;
@@ -1219,4 +1230,7 @@ Eigen::Vector3d Renderer::calcGeometry(const Eigen::Vector3d &dir, const Object 
             return in_Object.meshes[_rh.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__);
         }
     }
+
+    std::cerr << "error happens in calcGeometry()" << std::endl;
+    exit(1);
 }
