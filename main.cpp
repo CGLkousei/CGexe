@@ -1,3 +1,11 @@
+//
+//  main.cpp
+//  gl3d_hello_world
+//
+//  Created by Yonghao Yue on 2019/09/28.
+//  Copyright © 2019 Yonghao Yue. All rights reserved.
+//
+
 #define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 #define EIGEN_DONT_VECTORIZE
 
@@ -62,6 +70,7 @@ Renderer g_renderer;
 std::vector<AreaLight> g_AreaLights;
 
 Object g_Obj;
+Hair g_Hair;
 
 void initAreaLights() {
     AreaLight light1;
@@ -200,7 +209,7 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/room_twoblocks.obj", g_Obj);
+    loadObj("../obj/room_twoblocks.obj", g_Obj, g_Hair);
 
     g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
