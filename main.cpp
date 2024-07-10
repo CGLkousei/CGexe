@@ -14,19 +14,16 @@
 
 #define _USE_MATH_DEFINES
 
-#include <math.h>
 #include <vector>
 #include <iostream>
 #include <filesystem>
+#include <chrono>
+#include <ctime>
 
 #include "Camera.h"
-#include "Jpeg.h"
 #include "TriMesh.h"
 #include "GLPreview.h"
-#include "random.h"
-#include "Image.h"
 #include "Renderer.h"
-
 
 const int g_FilmWidth = 640;
 const int g_FilmHeight = 480;
@@ -36,9 +33,9 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 5;
-const int limit = 5;
-unsigned int samples = 10000;
+int mode = 6;
+const int limit = 6;
+unsigned int samples = 1000;
 unsigned int nSamplesPerPixel = 1000;
 bool save_flag = false;
 
@@ -63,6 +60,13 @@ std::vector<AreaLight> g_AreaLights;
 std::vector<ParticipatingMedia> g_ParticipatingMedia;
 
 Object g_Obj;
+
+void PrintCurrentTime(){
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+
+    std::cout << "Current time is " << std::ctime(&now_time) << std::endl;
+}
 
 void initAreaLights() {
     AreaLight light1;
@@ -118,6 +122,7 @@ void saveImg(const int limit, std::string filename, std::string directory){
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();
         save_flag = false;
+        PrintCurrentTime();
         start_time = clock();
     }
 }
@@ -220,6 +225,7 @@ int main(int argc, char *argv[]) {
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
+    PrintCurrentTime();
     start_time = clock();
 
     glutMainLoop();
