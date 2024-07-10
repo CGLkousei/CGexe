@@ -34,14 +34,14 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 2;
-const int limit = 2;
-unsigned int samples = 1000;
+int mode = 4;
+const int limit = 4;
+unsigned int samples = 1;
 unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
 const std::string filename = "mode";
-const std::string directoryname = "verification";
+const std::string directoryname = "hair";
 
 clock_t start_time;
 clock_t end_time;
@@ -87,10 +87,11 @@ void initAreaLights() {
 }
 void setHairMaterial(Hair &hairs){
     const Eigen::Vector3d color(0.52, 0.2, 0.12);
+//    const Eigen::Vector3d color(0.52, 0.2, 0.12);
     const double absorb = 0.5;
     const double alpha = -5;
     const double beta = 5;
-    const double radius = 3;
+    const double radius = 0.001;
 
     for(int i = 0; i < hairs.hairs.size(); i++){
         hairs.hairs[i].setRadius(radius);

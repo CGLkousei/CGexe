@@ -188,9 +188,11 @@ void Renderer::rayHairIntersect(const TriCurb &in_Curb, const int in_Line_idx, c
     bool isFront = true;
 
     const Eigen::Vector3d d = (v2 - v1).normalized();
+    const Eigen::Vector3d o = in_Ray.o;
+    const double minus = o.dot(d) - v1.dot(d);
     const double a = 4.0f;
-    const double b = 2.0f * d.dot(in_Ray.o - v1);
-    const double c = (in_Ray.o - v1).dot(in_Ray.o - v1) + 2.0f * ((in_Ray.o.dot(d)) - (v1.dot(d))) * (in_Ray.o - v1).dot(d) + ((in_Ray.o.dot(d) - (v1.dot(d)))) - radius * radius;
+    const double b = 2.0f * d.dot(in_Ray.o - v1) + 2.0f * minus;
+    const double c = (o - v1).dot(o - v1) + 2.0f * minus * (o - v1).dot(d) + minus * minus - radius * radius;
     const double discriminant = b * b - a * c;
 
     if(discriminant < 1e-6)
@@ -334,6 +336,17 @@ void Renderer::rendering(const int mode) {
                     I += computeMIS(ray, g_Obj, g_AreaLights, g_Hair, true);
                     break;
                 }
+                case 4: {
+                    RayHit in_RayHit;
+                    rayTracing(g_Obj, g_AreaLights, g_Hair, ray, in_RayHit);
+                    if(in_RayHit.mesh_idx == -3)
+                        I = g_Hair.hairs[in_RayHit.primitive_idx].hair_material.color;
+                    else if(in_RayHit.mesh_idx == -1)
+                        I = g_AreaLights[in_RayHit.primitive_idx].intensity * g_AreaLights[in_RayHit.primitive_idx].color;
+                    else
+                        I = g_Obj.meshes[in_RayHit.mesh_idx].material.color;
+                    break;
+                }
             }
         }
 
@@ -365,6 +378,9 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
 
         return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
     }
+
+    if (in_RayHit.mesh_idx == -3)
+        return in_Hair.hairs[in_RayHit.primitive_idx].hair_material.color;
 
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
