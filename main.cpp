@@ -36,7 +36,7 @@ bool g_DrawFilm = true;
 
 int mode = 4;
 const int limit = 4;
-unsigned int samples = 1;
+unsigned int samples = 100;
 unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
@@ -91,7 +91,7 @@ void setHairMaterial(Hair &hairs){
     const double absorb = 0.5;
     const double alpha = -5;
     const double beta = 5;
-    const double radius = 0.001;
+    const double radius = 1;
 
     for(int i = 0; i < hairs.hairs.size(); i++){
         hairs.hairs[i].setRadius(radius);
@@ -197,7 +197,7 @@ void resize(int w, int h) {
 }
 
 int main(int argc, char *argv[]) {
-    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 4.5});
+    g_Camera.setEyePoint(Eigen::Vector3d{0.0, 1.0, 5.5});
     g_Camera.lookAt(Eigen::Vector3d{0.0, 0.5, 0.0}, Eigen::Vector3d{0.0, 1.0, 0.0});
     initAreaLights();
 
