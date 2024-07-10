@@ -19,13 +19,12 @@
 #include <vector>
 #include <iostream>
 #include <filesystem>
+#include <chrono>
+#include <ctime>
 
 #include "Camera.h"
-#include "Jpeg.h"
 #include "TriMesh.h"
 #include "GLPreview.h"
-#include "random.h"
-#include "Image.h"
 #include "Renderer.h"
 
 
@@ -33,11 +32,9 @@ const int g_FilmWidth = 640;
 const int g_FilmHeight = 480;
 GLuint g_FilmTexture = 0;
 
-//RayTracingInternalData g_RayTracingInternalData;
-
 bool g_DrawFilm = true;
 
-int mode = 1;
+int mode = 2;
 const int limit = 2;
 unsigned int samples = 1000;
 unsigned int nSamplesPerPixel = 1;
@@ -65,6 +62,16 @@ std::vector<AreaLight> g_AreaLights;
 Object g_Obj;
 Hair g_Hair;
 
+void printCurrentTime(){
+    try{
+        auto now = std::chrono::system_clock::now();
+        std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+        std::cout << "Current time is " << std::ctime(&now_time);
+    } catch (const std::exception& e) {
+        std::cerr << "error occurred in printCurrentTime(): " << e.what() << std::endl;
+    }
+}
+
 void initAreaLights() {
     AreaLight light1;
     light1.pos << 0.0, 2.5, 0.0;
@@ -77,6 +84,18 @@ void initAreaLights() {
     light1.intensity = 40.0;
 
     g_AreaLights.push_back(light1);
+}
+void setHairMaterial(Hair &hairs){
+    const Eigen::Vector3d color(0.52, 0.2, 0.12);
+    const double absorb = 0.5;
+    const double alpha = -5;
+    const double beta = 5;
+    const double radius = 3;
+
+    for(int i = 0; i < hairs.hairs.size(); i++){
+        hairs.hairs[i].setRadius(radius);
+        hairs.hairs[i].setMaterial(color, absorb, alpha, beta);
+    }
 }
 void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
@@ -202,10 +221,11 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/room_twoblocks.obj", g_Obj, g_Hair);
+    loadObj("../obj/hair.obj", g_Obj, g_Hair);
 
+    setHairMaterial(g_Hair);
     g_renderer.setNsamples(nSamplesPerPixel, samples);
-    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
+    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_Hair);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 

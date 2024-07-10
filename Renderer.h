@@ -20,6 +20,7 @@ struct RayHit {
     int mesh_idx; // < -1: no intersection, -1: area light, >= 0: object_mesh
     int primitive_idx; // < 0: no intersection
     bool isFront;
+    Eigen::Vector3d n;
 };
 
 class Renderer {
@@ -41,7 +42,6 @@ public:
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
 
     void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights, Hair hair);
-    void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights);
     void setNsamples(const unsigned int nSample, const unsigned int samples);
 
     void resetFilm();
@@ -54,19 +54,11 @@ public:
     void rayHairIntersect(const TriCurb &in_Curb, const int in_Line_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const Ray &in_Ray, RayHit &io_Hit);
 
-    void rendering();
     void rendering(const int mode);
 
     Eigen::Vector3d sampleRandomPoint(const AreaLight &in_Light);
 
-    Eigen::Vector3d computeDirectLighting(const std::vector<AreaLight> &in_AreaLights, const Eigen::Vector3d &in_x,
-                                          const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                          const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material);
     Eigen::Vector3d computeRayHitNormal(const Object &in_Object, const RayHit &in_Hit);
-
-    Eigen::Vector3d computeRefraction(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_w_eye,
-                                      const RayHit &in_ray_hit, const Object &in_Object, const Material &in_Material,
-                                      const std::vector<AreaLight> &in_AreaLights);
 
     Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair);
     Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, bool first);
@@ -74,6 +66,7 @@ public:
 
     Eigen::Vector3d computeDirectLighting(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const int mode);
     Eigen::Vector3d computeDirectLighting_MIS(const Ray &in_Ray, const RayHit &in_RayHit, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, const int mode);
+
     double getLightProbability(const std::vector<AreaLight> &in_AreaLights);
     double getDiffuseProbablitity(const Eigen::Vector3d normal, const Eigen::Vector3d out_dir);
     double getBlinnPhongProbablitity(const Eigen::Vector3d in_dir, const Eigen::Vector3d normal, const Eigen::Vector3d out_dir, const double m);
