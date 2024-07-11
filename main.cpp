@@ -36,7 +36,7 @@ bool g_DrawFilm = true;
 int mode = 6;
 const int limit = 6;
 unsigned int samples = 1000;
-unsigned int nSamplesPerPixel = 1;
+unsigned int nSamplesPerPixel = 10;
 bool save_flag = false;
 
 const std::string filename = "mode";
