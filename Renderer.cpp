@@ -547,7 +547,7 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
     //いったん重みは考えない
     if (in_RayHit.mesh_idx == -1) // the ray has hit an area light
     {
-        if (in_RayHit.isFront && first)
+        if (in_RayHit.isFront)
             return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
 
         return Eigen::Vector3d::Zero();
@@ -1114,7 +1114,6 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
         _ray.prev_mesh_idx = in_RayHit.mesh_idx;
         _ray.prev_primitive_idx = in_RayHit.primitive_idx;
         RayHit _rh;
-
         rayTracing(in_Object, in_AreaLights, _ray, _rh);
         if(_rh.mesh_idx == in_SubPath[i].rh.mesh_idx && _rh.primitive_idx == in_SubPath[i].rh.primitive_idx){
             //接続が成功
@@ -1125,7 +1124,8 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                 case 1: {
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
                     const double pdf = getDiffuseProbability(n, connect_dir);
-                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF * cos_x / pdf);
+//                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF * cos_x / pdf);
+                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
                     break;
                 }
                 case 2: {
@@ -1206,8 +1206,11 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
 }
 
 Eigen::Vector3d Renderer::setRadiance(const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, const int index, const int light_index) {
-    Eigen::Vector3d I = in_AreaLights[light_index].intensity * in_AreaLights[light_index].color;
-    for(int i = 0; i <= index; i++){
+//    const double pdf = in_AreaLights[light_index].arm_u.cross(in_AreaLights[light_index].arm_v).norm() * 8.0f * __PI__;
+    const double pdf = 2.0f * __PI__;
+    Eigen::Vector3d I = in_AreaLights[light_index].intensity * in_AreaLights[light_index].color * pdf;
+
+    for(int i = 0; i < index; i++){
         I = I.cwiseProduct(in_SubPath[i].contribute);
     }
 

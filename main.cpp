@@ -36,11 +36,11 @@ bool g_DrawFilm = true;
 int mode = 6;
 const int limit = 6;
 unsigned int samples = 1000;
-unsigned int nSamplesPerPixel = 1000;
+unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
 const std::string filename = "mode";
-const std::string directoryname = "participating2";
+const std::string directoryname = "Bidirectional";
 
 clock_t start_time;
 clock_t end_time;
