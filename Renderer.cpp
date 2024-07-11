@@ -1206,9 +1206,9 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
 }
 
 Eigen::Vector3d Renderer::setRadiance(const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, const int index, const int light_index) {
-//    const double pdf = in_AreaLights[light_index].arm_u.cross(in_AreaLights[light_index].arm_v).norm() * 8.0f * __PI__;
+    const double pdf = in_AreaLights[light_index].arm_u.cross(in_AreaLights[light_index].arm_v).norm() * 8.0f * __PI__;
 //    const double pdf = 2.0f * __PI__;
-    const double pdf = 1.0f;
+//    const double pdf = 1.0f;
     Eigen::Vector3d I = in_AreaLights[light_index].intensity * in_AreaLights[light_index].color * pdf;
 
     for(int i = 0; i < index; i++){
