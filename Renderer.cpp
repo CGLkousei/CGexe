@@ -553,7 +553,7 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
     //いったん重みは考えない
     if (in_RayHit.mesh_idx == -1) // the ray has hit an area light
     {
-        if (in_RayHit.isFront)
+        if (in_RayHit.isFront && first)
             return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
 
         return Eigen::Vector3d::Zero();
@@ -1233,6 +1233,9 @@ Eigen::Vector3d Renderer::calcGeometry(const Eigen::Vector3d &dir, const Object 
     RayHit _rh = _s.rh;
 
     switch(_s.materialMode){
+        case 0: {
+            return Eigen::Vector3d::Ones();
+        }
         case 1: {
             return in_Object.meshes[_rh.mesh_idx].material.getKd() / __PI__;
         }
