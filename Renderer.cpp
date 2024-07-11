@@ -664,8 +664,8 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
                 const double distance = (x - in_Ray.o).norm();
                 const double path_pdf = in_Ray.pdf;
                 const double nee_pdf = getLightProbability(in_AreaLights) * distance * distance / cosine;
-//                const double MIS_weight = (path_pdf * path_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-                const double MIS_weight = 0.0f;
+                const double MIS_weight = (path_pdf * path_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                const double MIS_weight = 0.0f;
 
                 return MIS_weight * in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
             }
@@ -877,8 +877,8 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
                     const double path_pdf = getPhaseProbability(in_Ray.d, x_L, all_medias[p_index].hg_g);
                     const Eigen::Vector3d BSDF = all_medias[p_index].color * path_pdf;  //pdfがBSDFに相当
 
-//                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-                    const double MIS_weight = 1.0f;
+                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                    const double MIS_weight = 1.0f;
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
@@ -886,8 +886,8 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__;
                     const double path_pdf = getDiffuseProbability(n, x_L);
 
-//                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-                    const double MIS_weight = 1.0f;
+                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                    const double MIS_weight = 1.0f;
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }
@@ -898,8 +898,8 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
                     const Eigen::Vector3d BSDF = in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__);
                     const double path_pdf = getBlinnPhongProbability(in_Ray.d, n, x_L, m);
-//                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-                    const double MIS_weight = 1.0f;
+                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                    const double MIS_weight = 1.0f;
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
                 }

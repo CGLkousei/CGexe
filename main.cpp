@@ -33,14 +33,14 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 6;
-const int limit = 6;
-unsigned int samples = 1000;
+std::vector<int> modes = {1, 3};
+int index = 0;
+unsigned int samples = 10;
 unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
 const std::string filename = "mode";
-const std::string directoryname = "Bidirectional";
+const std::string directoryname = "OutPut_Img";
 
 clock_t start_time;
 clock_t end_time;
@@ -66,7 +66,7 @@ void printCurrentTime(){
         auto now = std::chrono::system_clock::now();
         std::time_t now_time = std::chrono::system_clock::to_time_t(now);
 
-        std::cout << "Current time is " << std::ctime(&now_time) << std::endl;
+        std::cout << "Current time is " << std::ctime(&now_time);
     } catch (const std::exception& e) {
         std::cerr << "error occurred in printCurrentTime(): " << e.what() << std::endl;
     }
@@ -81,7 +81,7 @@ void initAreaLights() {
     light1.arm_u = light1.arm_u * 0.7;
     light1.arm_v = light1.arm_v * 0.7;
     light1.color << 1.0, 1.0, 1.0;
-    light1.intensity = 40.0;
+    light1.intensity = 30.0;
 
     g_AreaLights.push_back(light1);
 }
@@ -90,11 +90,20 @@ void initParticipatingMedias(){
     pm.pos << 0.0f, 0.0f, 0.0f;
     pm.color << 0.78f, 0.78f, 0.78f;
     pm.radius = 10.0f;
-    pm.extinction = 0.45;
+    pm.extinction = 0.2;
     pm.albedo = 0.9;
     pm.hg_g = 0.9;
 
+//    ParticipatingMedia pm2;
+//    pm2.pos << 1.0f, 1.0f, -0.05f;
+//    pm2.color << 1.00f, 0.0f, 0.00f;
+//    pm2.radius = 1.0f;
+//    pm2.extinction = 0.55;
+//    pm2.albedo = 0.9;
+//    pm2.hg_g = 0.9;
+
     g_ParticipatingMedia.push_back(pm);
+//    g_ParticipatingMedia.push_back(pm2);
 }
 void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
     if(g_renderer.g_CountBuffer[0] >= samples){
@@ -106,7 +115,7 @@ void saveImg(const int limit, std::string filename, std::string directory){
     if(save_flag){
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
-        std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+        std::string file_str = filename + std::to_string(modes[index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
         //make the directory
         if(!std::filesystem::exists(directory)){
@@ -117,10 +126,10 @@ void saveImg(const int limit, std::string filename, std::string directory){
         }
 
         g_renderer.saveImg( directory + "/" + file_str);
-        std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
+        std::cout << "Rendering mode " << modes[index] << " takes " << time_str << " second." << std::endl << std::endl;
 
-        mode++;
-        if(mode > limit)
+        index++;
+        if(index >= limit)
             glutLeaveMainLoop();
 
         g_renderer.resetFilm();
@@ -154,13 +163,13 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     if(!save_flag) {
-        g_renderer.rendering(mode);
+        g_renderer.rendering(modes[index]);
         g_renderer.updateFilm();
         updateFilm();
     }
 
-    saveImg(limit, filename, directoryname);
-    changeMode(samples, limit, filename, directoryname);
+    saveImg(modes.size(), filename, directoryname);
+    changeMode(samples, modes.size(), filename, directoryname);
 
     glutPostRedisplay();
 }
@@ -212,7 +221,7 @@ int main(int argc, char *argv[]) {
     // g_FrameSize_WindowSize_Scale_x and g_FrameSize_WindowSize_Scale_y account for this factor.
     GLint dims[4] = {0};
     glGetIntegerv(GL_VIEWPORT, dims);
-    std::cout << "dims( " << dims[0] << ", " << dims[1] << ", " << dims[2] << ", " << dims[3] << ")" << std::endl;
+    std::cout << "dims( " << dims[0] << ", " << dims[1] << ", " << dims[2] << ", " << dims[3] << ")" << std::endl << std::endl;
 
     g_FrameSize_WindowSize_Scale_x = double(dims[2]) / double(width);
     g_FrameSize_WindowSize_Scale_y = double(dims[3]) / double(height);
