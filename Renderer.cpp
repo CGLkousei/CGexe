@@ -143,7 +143,7 @@ void Renderer::rayTriangleIntersect(const TriMesh &in_Mesh, const int in_Triangl
 }
 
 void Renderer::rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights, const int in_Light_idx, const Ray &in_Ray,
-                           RayHit &out_Result) {
+                                     RayHit &out_Result) {
     out_Result.t = __FAR__;
 
     const Eigen::Vector3d pos = in_AreaLights[in_Light_idx].pos;
@@ -354,12 +354,18 @@ void Renderer::rendering(const int mode) {
 
                     const Eigen::Vector3d light_normal = g_AreaLights[light_index].arm_u.cross(g_AreaLights[light_index].arm_v);
                     const Eigen::Vector3d light_point = sampleRandomPoint(g_AreaLights[light_index]);
+                    Ray light_ray; RayHit light_rayHit;
 
-                    Ray light_ray;
                     HemisphericSample(light_point, light_normal, light_ray, light_index);
-
                     LightTracing(light_ray, g_Obj, g_AreaLights, g_SubPath);
 
+                    light_rayHit.mesh_idx = -1;
+                    light_rayHit.primitive_idx = light_index;
+                    light_rayHit.isFront = true;
+                    g_SubPath[0].rh = light_rayHit;
+                    g_SubPath[0].contribute = Eigen::Vector3d::Ones() * 2.0f * __PI__;
+                    g_SubPath[0].x = light_point;
+                    g_SubPath[0].materialMode = 0;
                     for(int i = 0; i < g_SubPath.size(); i++){
                         g_SubPath[i].radiance = setRadiance(g_AreaLights, g_SubPath, i, light_index);
                     }
@@ -1058,7 +1064,7 @@ double Renderer::HemisphericSample(const Eigen::Vector3d &in_x, const Eigen::Vec
     out_ray.d = x_L;
     out_ray.prev_mesh_idx = -1;
     out_ray.prev_primitive_idx = light_index;
-    out_ray.depth = 0;
+    out_ray.depth = 1;
 
     return 1 / (2.0f * __PI__);
 }
@@ -1103,7 +1109,12 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
         const double dist = connect_dir.norm();
         connect_dir.normalize();
 
-        const Eigen::Vector3d connect_normal = computeRayHitNormal(in_Object, in_SubPath[i].rh);
+        Eigen::Vector3d connect_normal;
+        if(in_SubPath[i].rh.mesh_idx == -1)
+            connect_normal = in_AreaLights[in_SubPath[i].rh.primitive_idx].arm_u.cross(in_AreaLights[in_SubPath[i].rh.primitive_idx].arm_v);
+        else
+            connect_normal = computeRayHitNormal(in_Object, in_SubPath[i].rh);
+
         const double connect_cos = connect_normal.dot(-connect_dir);
         if(connect_cos <= 0.0) continue;
 
@@ -1206,8 +1217,8 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
 }
 
 Eigen::Vector3d Renderer::setRadiance(const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, const int index, const int light_index) {
-//    const double pdf = in_AreaLights[light_index].arm_u.cross(in_AreaLights[light_index].arm_v).norm() * 8.0f * __PI__;
-    const double pdf = 2.0f * __PI__;
+    const double pdf = in_AreaLights[light_index].arm_u.cross(in_AreaLights[light_index].arm_v).norm() * 4.0f;
+//    const double pdf = 2.0f * __PI__;
     Eigen::Vector3d I = in_AreaLights[light_index].intensity * in_AreaLights[light_index].color * pdf;
 
     for(int i = 0; i < index; i++){
