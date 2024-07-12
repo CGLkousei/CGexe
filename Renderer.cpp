@@ -359,6 +359,7 @@ void Renderer::rendering(const int mode) {
                     HemisphericSample(light_point, light_normal, light_ray, light_index);
                     LightTracing(light_ray, g_Obj, g_AreaLights, g_SubPath);
 
+                    const double cosine = light_ray.d.dot(light_normal);
                     light_rayHit.mesh_idx = -1;
                     light_rayHit.primitive_idx = light_index;
                     light_rayHit.isFront = true;
@@ -1104,15 +1105,14 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
     for(int i = 0; i < in_SubPath.size(); i++){
-        const Eigen::Vector3d connect_point = in_SubPath[i].x;
-        Eigen::Vector3d connect_dir = connect_point - x;
+        Eigen::Vector3d connect_dir = in_SubPath[i].x - x;
         const double dist = connect_dir.norm();
         connect_dir.normalize();
 
         Eigen::Vector3d connect_normal;
         if(in_SubPath[i].rh.mesh_idx == -1)
             connect_normal = in_AreaLights[in_SubPath[i].rh.primitive_idx].arm_u.cross(in_AreaLights[in_SubPath[i].rh.primitive_idx].arm_v);
-        else
+        else if(in_SubPath[i].rh.mesh_idx >= 0)
             connect_normal = computeRayHitNormal(in_Object, in_SubPath[i].rh);
 
         const double connect_cos = connect_normal.dot(-connect_dir);
@@ -1134,8 +1134,6 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
             switch(mode){
                 case 1: {
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
-                    const double pdf = getDiffuseProbability(n, connect_dir);
-//                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF * cos_x / pdf);
                     I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
                     break;
                 }
@@ -1143,10 +1141,8 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                     const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
                     const Eigen::Vector3d halfVector = ((-1 * in_Ray.d) + connect_dir).normalized();
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
-
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__)).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
-                    const double pdf = getBlinnPhongProbability(in_Ray.d, n, connect_dir, m);
-                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF * cos_x / pdf);
+                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
                     break;
                 }
             }
@@ -1218,7 +1214,6 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
 
 Eigen::Vector3d Renderer::setRadiance(const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, const int index, const int light_index) {
     const double pdf = in_AreaLights[light_index].arm_u.cross(in_AreaLights[light_index].arm_v).norm() * 4.0f;
-//    const double pdf = 2.0f * __PI__;
     Eigen::Vector3d I = in_AreaLights[light_index].intensity * in_AreaLights[light_index].color * pdf;
 
     for(int i = 0; i < index; i++){
