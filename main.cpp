@@ -38,8 +38,8 @@ bool g_DrawFilm = true;
 
 int mode = 1;
 const int limit = 2;
-unsigned int samples = 1000;
-unsigned int nSamplesPerPixel = 1;
+unsigned int samples = 100000;
+unsigned int nSamplesPerPixel = 100000;
 bool save_flag = false;
 
 const std::string filename = "mode";
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/room_twoblocks.obj", g_Obj);
+    loadObj("../obj/room.obj", g_Obj);
 
     g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights);
