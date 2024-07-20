@@ -555,7 +555,7 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
     //いったん重みは考えない
     if (in_RayHit.mesh_idx == -1) // the ray has hit an area light
     {
-        if (in_RayHit.isFront && first)
+        if (in_RayHit.isFront)
             return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
 
         return Eigen::Vector3d::Zero();
@@ -574,7 +574,6 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
         I += BidirectinalPathTrace(in_Ray, in_RayHit, in_AreaLights, in_Object, in_SubPath, 2);
 
     r = randomMT();
-
     if(r < kd){
         const double pdf = diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
         new_ray.pdf = pdf;
@@ -1107,7 +1106,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
-    for(int i = in_SubPath.size()-1; i < in_SubPath.size(); i++){
+    for(int i = 0; i < 1; i++){
         Eigen::Vector3d connect_dir = in_SubPath[i].x - x;
         const double dist = connect_dir.norm();
         connect_dir.normalize();

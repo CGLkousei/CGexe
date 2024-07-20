@@ -33,13 +33,13 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-std::vector<int> modes = {2, 6};
+std::vector<int> modes = {6};
 int index = 0;
-unsigned int samples = 5000;
+unsigned int samples = 1000;
 unsigned int nSamplesPerPixel = 1000;
 bool save_flag = false;
 
-const std::string filename = "mode";
+const std::string filename = "mode_";
 const std::string directoryname = "Bidirectional2";
 
 clock_t start_time;
