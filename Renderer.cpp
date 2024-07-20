@@ -555,7 +555,7 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
     //いったん重みは考えない
     if (in_RayHit.mesh_idx == -1) // the ray has hit an area light
     {
-        if (in_RayHit.isFront)
+        if (in_RayHit.isFront && first)
             return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
 
         return Eigen::Vector3d::Zero();
@@ -743,7 +743,7 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
         const double area = n_light.norm() * 4.0;
         n_light.normalize();
         const double cos_light = n_light.dot(-x_L);
-        if (cos_light <= 0.0) continue;
+        if(cos_light <= 0.0) continue;
 
         // shadow test
         Ray ray;
@@ -754,7 +754,8 @@ Eigen::Vector3d Renderer::computeDirectLighting(const Ray &in_Ray, const RayHit 
         RayHit rh;
         rayTracing(in_Object, in_AreaLights, ray, rh);
         if (rh.mesh_idx == -1 && rh.primitive_idx == i) {
-            const double cos_x = std::max<double>(0.0, x_L.dot(n));
+            const double cos_x =  x_L.dot(n);
+            if(cos_x <= 0.0) continue;
             const double G = (cos_x * cos_light) / (dist * dist);
 
             switch(mode){
@@ -1106,7 +1107,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
-    for(int i = 0; i < 1; i++){
+    for(int i = 0; i < in_SubPath.size(); i++){
         Eigen::Vector3d connect_dir = in_SubPath[i].x - x;
         const double dist = connect_dir.norm();
         connect_dir.normalize();
@@ -1131,6 +1132,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
         if(_rh.mesh_idx == in_SubPath[i].rh.mesh_idx && _rh.primitive_idx == in_SubPath[i].rh.primitive_idx){
             //接続が成功
             const double cos_x = n.dot(connect_dir);
+            if(cos_x <= 0.0) continue;
             const double G = (cos_x * connect_cos) / (dist * dist);
 
             switch(mode){
