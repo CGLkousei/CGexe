@@ -34,9 +34,9 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 4;
-const int limit = 4;
-unsigned int samples = 100;
+std::vector<int> modes = {4};
+int index = 0;
+unsigned int samples = 1;
 unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
@@ -98,7 +98,7 @@ void setHairMaterial(Hair &hairs){
         hairs.hairs[i].setMaterial(color, absorb, alpha, beta);
     }
 }
-void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
+void changeMode(const unsigned int samples){
     if(g_renderer.g_CountBuffer[0] >= samples){
         save_flag = true;
         end_time = clock();
@@ -108,7 +108,7 @@ void saveImg(const int limit, std::string filename, std::string directory){
     if(save_flag){
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
-        std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+        std::string file_str = filename + std::to_string(modes[index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
         //make the directory
         if(!std::filesystem::exists(directory)){
@@ -119,15 +119,16 @@ void saveImg(const int limit, std::string filename, std::string directory){
         }
 
         g_renderer.saveImg( directory + "/" + file_str);
-        std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
+        std::cout << "Rendering mode " << modes[index] << " takes " << time_str << " second." << std::endl << std::endl;
 
-        mode++;
-        if(mode > limit)
+        index++;
+        if(index > limit)
             glutLeaveMainLoop();
 
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();
         save_flag = false;
+        printCurrentTime();
         start_time = clock();
     }
 }
@@ -155,13 +156,13 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     if(!save_flag) {
-        g_renderer.rendering(mode);
+        g_renderer.rendering(modes[index]);
         g_renderer.updateFilm();
         updateFilm();
     }
 
-    saveImg(limit, filename, directoryname);
-    changeMode(samples, limit, filename, directoryname);
+    saveImg(modes.size(), filename, directoryname);
+    changeMode(samples);
 
     glutPostRedisplay();
 }
