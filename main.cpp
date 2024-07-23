@@ -36,7 +36,7 @@ bool g_DrawFilm = true;
 
 std::vector<int> modes = {4};
 int index = 0;
-unsigned int samples = 1;
+unsigned int samples = 1e8;
 unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
@@ -91,7 +91,7 @@ void setHairMaterial(Hair &hairs){
     const double absorb = 0.5;
     const double alpha = -5;
     const double beta = 5;
-    const double radius = 1;
+    const double radius = 3;
 
     for(int i = 0; i < hairs.hairs.size(); i++){
         hairs.hairs[i].setRadius(radius);
