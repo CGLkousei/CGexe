@@ -28,6 +28,7 @@ struct SubPath {
     Eigen::Vector3d radiance;
     RayHit rh;
     int materialMode;
+    double probability;
 };
 
 class Renderer {
@@ -86,10 +87,10 @@ public:
     double getPhaseProbability(const Eigen::Vector3d in_dir, const Eigen::Vector3d out_dir, const double hg_g);
 
     Eigen::Vector3d sampleRandomPoint(const AreaLight &in_Light);
-    double diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const int depth);
-    double blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth);
-    double scatteringSaple(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_direction, Ray &out_ray, const int p_index, const double hg_g, const int depth);
-    double HemisphericSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const int light_index);
+    void diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const int depth);
+    void blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth);
+    void scatteringSaple(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_direction, Ray &out_ray, const int p_index, const double hg_g, const int depth);
+    void HemisphericSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const int light_index);
 
     bool isInParticipatingMedia(const ParticipatingMedia &media, const Eigen::Vector3d &in_point);
     double getFreePath(const std::vector<ParticipatingMedia> &all_medias, const Eigen::Vector3d &in_point, int &index);
