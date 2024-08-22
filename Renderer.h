@@ -98,6 +98,7 @@ public:
     Eigen::Vector3d BidirectinalPathTrace(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const Object &in_Object, const std::vector<SubPath> &in_SubPath, const int mode);
     void LightTracing(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<SubPath> &in_subpath);
     Eigen::Vector3d setRadiance(const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, const int index, const int light_index);
+    void setProbability(std::vector<SubPath> &in_Subpath);
     Eigen::Vector3d calcGeometry(const Eigen::Vector3d &dir, const Object &in_Object, const std::vector<SubPath> &in_SubPath, const int index);
 };
 

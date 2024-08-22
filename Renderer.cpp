@@ -10,6 +10,7 @@
 #define __FAR__ 1.0e33
 #define __PI__ 	3.14159265358979323846
 #define MAX_RAY_DEPTH INT_MAX
+#define PATH_LENGTH 5
 
 Renderer::Renderer() {
     g_FilmBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
@@ -352,9 +353,8 @@ void Renderer::rendering(const int mode) {
                         light_index--;
                     }
 
-                    Eigen::Vector3d light_normal = g_AreaLights[light_index].arm_u.cross(g_AreaLights[light_index].arm_v);
-                    g_SubPath[0].probability = light_normal.norm() * 4.0f;
-                    light_normal.normalize();
+                    const Eigen::Vector3d light_cross = g_AreaLights[light_index].arm_u.cross(g_AreaLights[light_index].arm_v);
+                    const Eigen::Vector3d light_normal = light_cross.normalized();
 
                     const Eigen::Vector3d light_point = sampleRandomPoint(g_AreaLights[light_index]);
                     Ray light_ray; RayHit light_rayHit;
@@ -370,9 +370,12 @@ void Renderer::rendering(const int mode) {
                     g_SubPath[0].contribute = Eigen::Vector3d::Ones() * 2.0f * __PI__;
                     g_SubPath[0].x = light_point;
                     g_SubPath[0].materialMode = 0;
+                    g_SubPath[0].probability = light_cross.norm() * 4.0f;
                     for(int i = 0; i < g_SubPath.size(); i++){
                         g_SubPath[i].radiance = setRadiance(g_AreaLights, g_SubPath, i, light_index);
                     }
+
+                    setProbability(g_SubPath);
 
                     I += computeBPT(ray, g_Obj, g_AreaLights, g_SubPath, true);
                     break;
@@ -391,6 +394,9 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
     if(in_Ray.depth > MAX_RAY_DEPTH)
         return Eigen::Vector3d::Zero();
 
+    if(in_Ray.depth > PATH_LENGTH)
+        return Eigen::Vector3d::Zero();
+
     Ray new_ray; RayHit in_RayHit;
     rayTracing(in_Object, in_AreaLights, in_Ray, in_RayHit);
 
@@ -402,7 +408,10 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         if (!in_RayHit.isFront)
             return Eigen::Vector3d::Zero();
 
-        return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
+        if(in_Ray.depth == PATH_LENGTH)
+            return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
+        else
+            return Eigen::Vector3d::Zero();
     }
 
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
@@ -1107,7 +1116,10 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
-    for(int i = 0; i < in_SubPath.size(); i++){
+//    for(int i = 0; i < in_SubPath.size(); i++){
+        int i = PATH_LENGTH - in_Ray.depth;
+        if(i > in_SubPath.size() - 1 || i < 0) return Eigen::Vector3d::Zero();
+
         Eigen::Vector3d connect_dir = in_SubPath[i].x - x;
         const double dist = connect_dir.norm();
         connect_dir.normalize();
@@ -1119,7 +1131,8 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
             connect_normal = computeRayHitNormal(in_Object, in_SubPath[i].rh);
 
         const double connect_cos = connect_normal.dot(-connect_dir);
-        if(connect_cos <= 0.0) continue;
+//        if(connect_cos <= 0.0) continue;
+        if(connect_cos <= 0.0) return Eigen::Vector3d::Zero();
 
         // shadow test
         Ray _ray;
@@ -1132,7 +1145,9 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
         if(_rh.mesh_idx == in_SubPath[i].rh.mesh_idx && _rh.primitive_idx == in_SubPath[i].rh.primitive_idx){
             //接続が成功
             const double cos_x = n.dot(connect_dir);
-            if(cos_x <= 0.0) continue;
+//            if(cos_x <= 0.0) continue;
+            if(cos_x <= 0.0) return Eigen::Vector3d::Zero();
+
             const double G = (cos_x * connect_cos) / (dist * dist);
 
             switch(mode){
@@ -1151,7 +1166,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                 }
             }
         }
-    }
+//    }
 
     return I;
 }
@@ -1191,6 +1206,7 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
 
         in_subpath[depth].contribute = in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / kd;
         in_subpath[depth].materialMode = 1;
+        in_subpath[depth].probability = in_Ray.pdf;
     }
     else if(r < kd + ks){
         const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
@@ -1204,6 +1220,7 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
         const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
         in_subpath[depth].contribute = in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f) / (ks * (m + 1.0f));
         in_subpath[depth].materialMode = 2;
+        in_subpath[depth].probability = in_Ray.pdf;
     }
     else{
         in_subpath.resize(depth);
@@ -1225,6 +1242,12 @@ Eigen::Vector3d Renderer::setRadiance(const std::vector<AreaLight> &in_AreaLight
     }
 
     return I;
+}
+
+void Renderer::setProbability(std::vector<SubPath> &in_Subpath) {
+    for(int i = 1; i < in_Subpath.size(); i++){
+        in_Subpath[i].probability *= in_Subpath[i - 1].probability;
+    }
 }
 
 Eigen::Vector3d Renderer::calcGeometry(const Eigen::Vector3d &dir, const Object &in_Object, const std::vector<SubPath> &in_SubPath, const int index) {
