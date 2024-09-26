@@ -86,12 +86,12 @@ void initAreaLights() {
     g_AreaLights.push_back(light1);
 }
 void setHairMaterial(Hair &hairs){
-    const Eigen::Vector3d color(0.52, 0.2, 0.12);
+    const Eigen::Vector3d color(0.0, 0.0, 0.0);
 //    const Eigen::Vector3d color(0.52, 0.2, 0.12);
     const double absorb = 0.5;
     const double alpha = -5;
     const double beta = 5;
-    const double radius = 1;
+    const double radius = 0.05;
 
     for(int i = 0; i < hairs.hairs.size(); i++){
         hairs.hairs[i].setRadius(radius);
@@ -225,6 +225,19 @@ int main(int argc, char *argv[]) {
     loadObj("../obj/hair.obj", g_Obj, g_Hair);
 
     setHairMaterial(g_Hair);
+//    for(int i = 0; i < g_Hair.hairs.size(); i++){
+//        std::cout << g_Hair.hairs[i].vertices.size() << std::endl;
+//        std::cout << g_Hair.hairs[i].lines.size() << std::endl;
+//        for(int j = 0; j < g_Hair.hairs[i].lines.size(); j++){
+//            std::cout << g_Hair.hairs[i].lines[j].transpose() << std::endl;
+//        }
+//    }
+    g_Hair.hairs[0].colors.resize(g_Hair.hairs[0].lines.size());
+    for(int j = 0; j < g_Hair.hairs[0].lines.size(); j++){
+        g_Hair.hairs[0].colors[j] = g_Hair.hairs[0].hair_material.color;
+        g_Hair.hairs[0].colors[j].x() = (double)j / (double)(g_Hair.hairs[0].lines.size() - 1);
+        std::cout << g_Hair.hairs[0].colors[j].x() << std::endl;
+    }
     g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_Hair);
 

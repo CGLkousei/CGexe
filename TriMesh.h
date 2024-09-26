@@ -54,6 +54,7 @@ struct TriMesh {
 struct TriCurb {
     std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> vertices;
     std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i>> lines;
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> colors;
 
     double radius;
     HairMaterial hair_material;

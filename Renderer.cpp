@@ -187,29 +187,55 @@ void Renderer::rayHairIntersect(const TriCurb &in_Curb, const int in_Line_idx, c
 
     bool isFront = true;
 
-    const Eigen::Vector3d d = (v2 - v1).normalized();
-    const Eigen::Vector3d o = in_Ray.o;
-    const double minus = o.dot(d) - v1.dot(d);
-    const double a = 4.0f;
-    const double b = 2.0f * d.dot(in_Ray.o - v1) + 2.0f * minus;
-    const double c = (o - v1).dot(o - v1) + 2.0f * minus * (o - v1).dot(d) + minus * minus - radius * radius;
+    const Eigen::Vector3d constant_A = in_Ray.o - v1;
+    const Eigen::Vector3d v1_to_v2 = v2 - v1;
+    const double norm = v1_to_v2.norm();
+    const Eigen::Vector3d d = in_Ray.d;
+
+    const Eigen::Vector3d d_cross = d.cross(v1_to_v2);
+    const Eigen::Vector3d A_cross = constant_A.cross(v1_to_v2);
+
+    const double a = d_cross.dot(d_cross);
+    const double b = A_cross.dot(d_cross);
+    const double c = A_cross.dot(A_cross) - radius * radius * norm * norm;
+
+//    const double a = 1.0f;
+//    const double b = d.dot(in_Ray.o - v1);
+//    const double c = (in_Ray.o - v1).dot(in_Ray.o - v1) - radius * radius;
+
+//    const Eigen::Vector3d d = (v2 - v1).normalized();
+//    const Eigen::Vector3d o = in_Ray.o;
+//    const double minus = o.dot(d) - v1.dot(d);
+//    const double a = 4.0f;
+//    const double b = 2.0f * d.dot(in_Ray.o - v1) + 2.0f * minus;
+//    const double c = (o - v1).dot(o - v1) + 2.0f * minus * (o - v1).dot(d) + minus * minus - radius * radius;
+
     const double discriminant = b * b - a * c;
 
     if(discriminant < 1e-6)
         return;
 
-    const Eigen::Array2d distances{(-b - sqrt(discriminant)), (-b + sqrt(discriminant))};
+    const Eigen::Array2d distances{(-b - sqrt(discriminant)) / a, (-b + sqrt(discriminant)) / a};
     if((distances < 1e-6).all()) return;
 
-    out_Result.t = distances[0] > 1e-6 ? distances[0] : distances[1];
-    const Eigen::Vector3d point = in_Ray.o + in_Ray.d * out_Result.t;
-    Eigen::Vector3d n = ((point - v1).dot(d) * d).normalized();
+    const double t = distances[0] > 1e-6 ? distances[0] : distances[1];
+    const Eigen::Vector3d point = in_Ray.o + d * t;
+
+    const double u = (point - v1).dot(v1_to_v2);
+    const Eigen::Vector3d parallel = u * v1_to_v2;
+
+    if(u < 0 || u > 1){
+        return;
+    }
+
+    Eigen::Vector3d n = point - parallel;
 
     if(in_Ray.d.dot(n) > 0.0f) {
         n = -n;
         isFront = false;
     }
 
+    out_Result.t = t;
     out_Result.isFront = isFront;
     out_Result.n = n;
 }
@@ -220,6 +246,7 @@ void Renderer::rayTracing(const Object &in_Object, const std::vector<AreaLight> 
     int mesh_idx = -99;
     int primitive_idx = -1;
     bool isFront = true;
+    bool isHair = false;
     Eigen::Vector3d n = Eigen::Vector3d::Zero();
 
     for (int m = 0; m < in_Object.meshes.size(); m++) {
@@ -235,6 +262,7 @@ void Renderer::rayTracing(const Object &in_Object, const std::vector<AreaLight> 
                 mesh_idx = m;
                 primitive_idx = k;
                 isFront = temp_hit.isFront;
+                isHair = false;
             }
         }
     }
@@ -251,20 +279,22 @@ void Renderer::rayTracing(const Object &in_Object, const std::vector<AreaLight> 
             mesh_idx = -1;
             primitive_idx = l;
             isFront = temp_hit.isFront;
+            isHair = false;
         }
     }
 
     for (int m = 0; m < in_Hair.hairs.size(); m++) {
         for (int k = 0; k < in_Hair.hairs[m].lines.size(); k++) {
-            if(-3 == in_Ray.prev_mesh_idx && k == in_Ray.prev_primitive_idx) continue;
+            if(m == in_Ray.prev_mesh_idx && k == in_Ray.prev_primitive_idx) continue;
 
             RayHit temp_hit;
             rayHairIntersect(in_Hair.hairs[m], k, in_Ray, temp_hit);
             if(temp_hit.t < t_min){
                 t_min = temp_hit.t;
-                mesh_idx = -3;
+                mesh_idx = m;
                 primitive_idx = k;
                 isFront = temp_hit.isFront;
+                isHair = true;
                 n = temp_hit.n;
             }
         }
@@ -276,6 +306,7 @@ void Renderer::rayTracing(const Object &in_Object, const std::vector<AreaLight> 
     io_Hit.mesh_idx = mesh_idx;
     io_Hit.primitive_idx = primitive_idx;
     io_Hit.isFront = isFront;
+    io_Hit.isHair = isHair;
     io_Hit.n = n;
 }
 
@@ -339,8 +370,8 @@ void Renderer::rendering(const int mode) {
                 case 4: {
                     RayHit in_RayHit;
                     rayTracing(g_Obj, g_AreaLights, g_Hair, ray, in_RayHit);
-                    if(in_RayHit.mesh_idx == -3)
-                        I = g_Hair.hairs[in_RayHit.primitive_idx].hair_material.color;
+                    if(in_RayHit.isHair)
+                        I = g_Hair.hairs[in_RayHit.mesh_idx].colors[in_RayHit.primitive_idx];
                     else if(in_RayHit.mesh_idx == -1)
                         I = g_AreaLights[in_RayHit.primitive_idx].intensity * g_AreaLights[in_RayHit.primitive_idx].color;
                     else
@@ -379,7 +410,7 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
     }
 
-    if (in_RayHit.mesh_idx == -3)
+    if (in_RayHit.isHair)
         return in_Hair.hairs[in_RayHit.primitive_idx].hair_material.color;
 
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
