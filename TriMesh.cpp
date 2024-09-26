@@ -501,6 +501,17 @@ bool loadObj(const std::string &in_filename, Object &out_object, Hair &out_hair)
         out_object.meshes.push_back(mesh);
     }
 
+    int min_index = INT_MAX;
+    for (int i = 0; i < internal_points.size(); i++){
+        for (int j = 0; j < internal_points[i].points.size(); j++){
+            if (internal_points[i].points[j].x() < min_index)
+                min_index = internal_points[i].points[j].x();
+
+            if (internal_points[i].points[j].y() < min_index)
+                min_index = internal_points[i].points[j].y();
+        }
+    }
+
     for (int i = 0; i < internal_points.size(); i++) {
         std::vector<int> index;
 
@@ -516,11 +527,13 @@ bool loadObj(const std::string &in_filename, Object &out_object, Hair &out_hair)
         TriCurb curb;
         curb.lines.resize(internal_points[i].points.size());
         curb.vertices.resize(index.size());
+
         for (int j = 0; j < internal_points[i].points.size(); j++) {
-            curb.lines[j].x() = internal_points[i].points[j].x() - internal_points[i].points[0].x();
-            curb.lines[j].y() = internal_points[i].points[j].y() - internal_points[i].points[0].x();
+            curb.lines[j].x() = internal_points[i].points[j].x() - min_index;
+            curb.lines[j].y() = internal_points[i].points[j].y() - min_index;
         }
 
+        std::sort(index.begin(), index.end());
         for (int j = 0; j < index.size(); j++) {
             curb.vertices[j] = internal_vertices.vertices[index[j]-1];
         }

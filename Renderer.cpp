@@ -221,13 +221,11 @@ void Renderer::rayHairIntersect(const TriCurb &in_Curb, const int in_Line_idx, c
     const double t = distances[0] > 1e-6 ? distances[0] : distances[1];
     const Eigen::Vector3d point = in_Ray.o + d * t;
 
-    const double u = (point - v1).dot(v1_to_v2);
-    const Eigen::Vector3d parallel = u * v1_to_v2;
-
-    if(u < 0 || u > 1){
+    const double u = (point - v1).dot(v1_to_v2) / (norm * norm);
+    if(u < 0 || u > 1)
         return;
-    }
 
+    const Eigen::Vector3d parallel = u * v1_to_v2;
     Eigen::Vector3d n = point - parallel;
 
     if(in_Ray.d.dot(n) > 0.0f) {
@@ -371,7 +369,7 @@ void Renderer::rendering(const int mode) {
                     RayHit in_RayHit;
                     rayTracing(g_Obj, g_AreaLights, g_Hair, ray, in_RayHit);
                     if(in_RayHit.isHair)
-                        I = g_Hair.hairs[in_RayHit.mesh_idx].colors[in_RayHit.primitive_idx];
+                        I = g_Hair.hairs[in_RayHit.mesh_idx].hair_material.color;
                     else if(in_RayHit.mesh_idx == -1)
                         I = g_AreaLights[in_RayHit.primitive_idx].intensity * g_AreaLights[in_RayHit.primitive_idx].color;
                     else
