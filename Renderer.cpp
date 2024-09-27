@@ -226,7 +226,7 @@ void Renderer::rayHairIntersect(const TriCurb &in_Curb, const int in_Line_idx, c
         return;
 
     const Eigen::Vector3d parallel = u * v1_to_v2;
-    Eigen::Vector3d n = point - parallel;
+    Eigen::Vector3d n = (point - parallel).normalized();
 
     if(in_Ray.d.dot(n) > 0.0f) {
         n = -n;
@@ -408,32 +408,39 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
     }
 
-    if (in_RayHit.isHair)
-        return in_Hair.hairs[in_RayHit.primitive_idx].hair_material.color;
-
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
-    const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
-
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
 
-    const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
-    const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
-    const double r = randomMT();
+    if (in_RayHit.isHair){
+        const Eigen::Vector3d n = in_RayHit.n;
+        const double cosine_t = n.dot(in_Ray.d);
+        const double sine_t = sin(acos(cosine_t));
 
-    if(r < kd){
-        diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
-        I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+        const double cosine_f = cosine_t * sqrt(1.0f - sine_t * sine_t);
     }
-    else if(r < kd + ks){
-        const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
-        const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m, in_Ray.depth);
-        if(pdf < 0.0f)
-            return I;
-        const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
-        I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
+    else {
+        const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
+
+        const double kd = in_Object.meshes[in_RayHit.mesh_idx].material.kd;
+        const double ks = in_Object.meshes[in_RayHit.mesh_idx].material.ks;
+        const double r = randomMT();
+
+        if(r < kd){
+            diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
+            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+        }
+        else if(r < kd + ks){
+            const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
+            const double pdf = blinnPhongSample(x, n, in_Ray.d, new_ray, in_RayHit, in_Object, m, in_Ray.depth);
+            if(pdf < 0.0f)
+                return I;
+            const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
+            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
+        }
+
+        return I;
     }
 
-    return I;
 }
 
 Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, bool first) {
@@ -745,4 +752,26 @@ double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vect
         return -1.0f;
 
     return (m + 1) * pow(cos(theta), m) / (2.0f * __PI__);
+}
+
+double Renderer::FrDielectric(double cosine, double etaI, double etaT) const {
+    if(cosine <= 0.0f){
+        double tmp = etaI;
+        etaI = etaT;
+        etaT = tmp;
+
+        cosine = abs(cosine);
+    }
+
+    const double sineI = sqrt(1.0f - cosine * cosine);
+    const double sineT = etaI / etaT * sineI;
+
+    if(sineT >= 1.0f)
+        return 1.0f;
+
+    const double cosineT = sqrt(1.0f - sineT * sineT);
+    const double Rpar1 = ((etaT * cosine) - (etaI * cosineT)) / ((etaT * cosine) + (etaI * cosineT));
+    const double Rperp = ((etaI * cosine) - (etaT * cosineT)) / ((etaI * cosine) + (etaT * cosineT));
+
+    return (Rpar1 * Rpar1 + Rperp * Rperp) * 0.5f;
 }

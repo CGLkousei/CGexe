@@ -4,9 +4,11 @@
 #include "TriMesh.h"
 #include "Jpeg.h"
 #include <iostream>
-#include <string.h>
+#include <string>
 #include <algorithm>
 #include <map>
+
+#define __PI__ 	3.14159265358979323846
 
 struct InternalVertices {
     std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> vertices;
@@ -579,6 +581,34 @@ Eigen::Vector3d Material::getKs() const{
 }
 Eigen::Vector3d Material::getKt() const{
     return kt * color;
+}
+
+double HairMaterial::getAlpha(const int p) const {
+    if(p == 0)
+        return alpha;
+    else if(p == 1)
+        return - alpha / 2.0f;
+    else if(p == 2)
+        return - 3.0f * alpha / 2.0f;
+    else
+        return alpha;
+}
+double HairMaterial::getBeta(const int p) const {
+    if(p == 0)
+        return beta;
+    else if(p == 1)
+        return beta / 2.0f;
+    else if(p == 2)
+        return 2.0f * beta;
+    else
+        return beta;
+}
+double HairMaterial::getMp(const int p, const double theta) const {
+    const double alpha = getAlpha(p);
+    const double beta = getBeta(p);
+    const double mu = theta - alpha;
+
+    return exp( - (mu * mu) / (2.0f * beta * beta)) / sqrt(2.0f * __PI__ * beta * beta);
 }
 
 void TriCurb::setMaterial(const Eigen::Vector3d &set_color, const double set_absorb, const double set_alpha,

@@ -91,7 +91,7 @@ void setHairMaterial(Hair &hairs){
     const double absorb = 0.5;
     const double alpha = -5;
     const double beta = 5;
-    const double radius = 0.04;
+    const double radius = 0.03;
 
     for(int i = 0; i < hairs.hairs.size(); i++){
         hairs.hairs[i].setRadius(radius);
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
     glutReshapeFunc(resize);
 
     initFilm();
-    loadObj("../obj/hair_test.obj", g_Obj, g_Hair);
+    loadObj("../obj/hair.obj", g_Obj, g_Hair);
 
     setHairMaterial(g_Hair);
 //    for(int i = 0; i < g_Hair.hairs.size(); i++){

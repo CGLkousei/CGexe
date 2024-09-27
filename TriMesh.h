@@ -38,6 +38,10 @@ struct HairMaterial {
     double absorb;
     double alpha;
     double beta;
+
+    double getAlpha(const int p) const;
+    double getBeta(const int p) const;
+    double getMp(const int p, const double theta) const;
 };
 
 struct TriMesh {
