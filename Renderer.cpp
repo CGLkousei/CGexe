@@ -10,7 +10,6 @@
 #define __FAR__ 1.0e33
 #define __PI__ 	3.14159265358979323846
 #define MAX_RAY_DEPTH INT_MAX
-#define PATH_LENGTH 5
 
 Renderer::Renderer() {
     g_FilmBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
@@ -394,9 +393,6 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
     if(in_Ray.depth > MAX_RAY_DEPTH)
         return Eigen::Vector3d::Zero();
 
-    if(in_Ray.depth > PATH_LENGTH)
-        return Eigen::Vector3d::Zero();
-
     Ray new_ray; RayHit in_RayHit;
     rayTracing(in_Object, in_AreaLights, in_Ray, in_RayHit);
 
@@ -408,10 +404,7 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         if (!in_RayHit.isFront)
             return Eigen::Vector3d::Zero();
 
-        if(in_Ray.depth == PATH_LENGTH)
-            return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
-        else
-            return Eigen::Vector3d::Zero();
+        return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
     }
 
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
@@ -568,7 +561,8 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
     {
         if (in_RayHit.isFront && first)
             return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
-
+        else if(in_RayHit.isFront)
+            return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color / (in_Ray.depth + 1);
         return Eigen::Vector3d::Zero();
     }
 
@@ -1115,9 +1109,9 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
+    const int depth = in_Ray.depth;
 
-//    for(int i = 0; i < in_SubPath.size(); i++){
-        int i = PATH_LENGTH - in_Ray.depth;
+    for(int i = 0; i < in_SubPath.size(); i++){
         if(i > in_SubPath.size() - 1 || i < 0) return Eigen::Vector3d::Zero();
 
         Eigen::Vector3d connect_dir = in_SubPath[i].x - x;
@@ -1131,8 +1125,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
             connect_normal = computeRayHitNormal(in_Object, in_SubPath[i].rh);
 
         const double connect_cos = connect_normal.dot(-connect_dir);
-//        if(connect_cos <= 0.0) continue;
-        if(connect_cos <= 0.0) return Eigen::Vector3d::Zero();
+        if(connect_cos <= 0.0) continue;
 
         // shadow test
         Ray _ray;
@@ -1145,15 +1138,14 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
         if(_rh.mesh_idx == in_SubPath[i].rh.mesh_idx && _rh.primitive_idx == in_SubPath[i].rh.primitive_idx){
             //接続が成功
             const double cos_x = n.dot(connect_dir);
-//            if(cos_x <= 0.0) continue;
-            if(cos_x <= 0.0) return Eigen::Vector3d::Zero();
+            if(cos_x <= 0.0) continue;
 
             const double G = (cos_x * connect_cos) / (dist * dist);
 
             switch(mode){
                 case 1: {
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
-                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
+                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF) / (depth + i + 2);
                     break;
                 }
                 case 2: {
@@ -1161,12 +1153,12 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                     const Eigen::Vector3d halfVector = ((-1 * in_Ray.d) + connect_dir).normalized();
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__)).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
-                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
+                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF) / (depth + i + 2);
                     break;
                 }
             }
         }
-//    }
+    }
 
     return I;
 }
@@ -1192,7 +1184,6 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
     }
 
     //viewPointに衝突した場合の処理はここに書く
-
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
 
@@ -1230,6 +1221,7 @@ void Renderer::LightTracing(const Ray &in_Ray, const Object &in_Object, const st
     in_subpath[depth].in_dir = in_Ray.d;
     in_subpath[depth].x = new_ray.o;
     in_subpath[depth].rh = in_RayHit;
+
     return;
 }
 

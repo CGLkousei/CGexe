@@ -34,13 +34,15 @@ GLuint g_FilmTexture = 0;
 bool g_DrawFilm = true;
 
 std::vector<int> modes = {6};
-int index = 0;
-unsigned int samples = 1000;
+std::vector<int> path_lengths = {2};
+int mode_index = 0;
+int path_index = 0;
+unsigned int samples = 5000;
 unsigned int nSamplesPerPixel = 1000;
 bool save_flag = false;
 
 const std::string filename = "mode__";
-const std::string directoryname = "Bidirectional3";
+const std::string directoryname = "Bidirectional5";
 
 clock_t start_time;
 clock_t end_time;
@@ -48,8 +50,6 @@ clock_t end_time;
 int width = 640;
 int height = 480;
 
-int g_MM_LIGHT_idx = 0;
-int mx, my;
 
 double g_FrameSize_WindowSize_Scale_x = 1.0;
 double g_FrameSize_WindowSize_Scale_y = 1.0;
@@ -105,17 +105,17 @@ void initParticipatingMedias(){
     g_ParticipatingMedia.push_back(pm);
 //    g_ParticipatingMedia.push_back(pm2);
 }
-void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
+void changeMode(const unsigned int samples){
     if(g_renderer.g_CountBuffer[0] >= samples){
         save_flag = true;
         end_time = clock();
     }
 }
-void saveImg(const int limit, std::string filename, std::string directory){
+void saveImg(std::string filename, std::string directory){
     if(save_flag){
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
-        std::string file_str = filename + std::to_string(modes[index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+        std::string file_str = filename + std::to_string(modes[mode_index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
         //make the directory
         if(!std::filesystem::exists(directory)){
@@ -126,11 +126,16 @@ void saveImg(const int limit, std::string filename, std::string directory){
         }
 
         g_renderer.saveImg( directory + "/" + file_str);
-        std::cout << "Rendering mode " << modes[index] << " takes " << time_str << " second." << std::endl << std::endl;
+        std::cout << "Rendering mode " << modes[mode_index] << " takes " << time_str << " second." << std::endl << std::endl;
 
-        index++;
-        if(index >= limit)
-            glutLeaveMainLoop();
+        mode_index++;
+        if(mode_index >= modes.size()){
+            mode_index = 0;
+            path_index++;
+
+            if(path_index >= path_lengths.size())
+                glutLeaveMainLoop();
+        }
 
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();
@@ -163,13 +168,14 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     if(!save_flag) {
-        g_renderer.rendering(modes[index]);
+        g_renderer.path_length = path_lengths[path_index];
+        g_renderer.rendering(modes[mode_index]);
         g_renderer.updateFilm();
         updateFilm();
     }
 
-    saveImg(modes.size(), filename, directoryname);
-    changeMode(samples, modes.size(), filename, directoryname);
+    saveImg(filename, directoryname);
+    changeMode(samples);
 
     glutPostRedisplay();
 }

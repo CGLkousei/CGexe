@@ -40,6 +40,7 @@ public:
     int *g_CountBuffer = nullptr;
     RayTracingInternalData g_RayTracingInternalData;
     int nSamplesPerPixel = 1;
+    int path_length = 0;
 
     Camera g_Camera;
     std::vector<AreaLight> g_AreaLights;
