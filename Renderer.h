@@ -76,7 +76,7 @@ public:
     double blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth);
 
     double FrDielectric(double cosine, double etaI, double etaT) const;
+    double getTransmittance(double absorption, double h, double theta_t) const;
 };
-
 
 #endif //CGEXE_RENDERER_H

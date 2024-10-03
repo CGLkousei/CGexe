@@ -775,3 +775,11 @@ double Renderer::FrDielectric(double cosine, double etaI, double etaT) const {
 
     return (Rpar1 * Rpar1 + Rperp * Rperp) * 0.5f;
 }
+
+double Renderer::getTransmittance(double absorption, double h, double theta_t) const {
+    const double gamma = acos(h);
+    const double cosine_g = cos(2.0f * gamma);
+
+    const double _absorption = absorption / cos(theta_t);
+    return exp(-2.0f * _absorption * (1 + cosine_g));
+}
