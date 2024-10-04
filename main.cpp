@@ -41,7 +41,7 @@ unsigned int samples = 5000;
 unsigned int nSamplesPerPixel = 1000;
 bool save_flag = false;
 
-const std::string filename = "mode__";
+const std::string filename = "mode___";
 const std::string directoryname = "Bidirectional5";
 
 clock_t start_time;

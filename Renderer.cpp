@@ -507,8 +507,8 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
                 const double distance = (x - in_Ray.o).norm();
                 const double path_pdf = in_Ray.pdf;
                 const double nee_pdf = getLightProbability(in_AreaLights) * distance * distance / cosine;
-//                const double MIS_weight = (path_pdf * path_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-                const double MIS_weight = 0.5f;
+                const double MIS_weight = (path_pdf * path_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                const double MIS_weight = 0.5f;
 
                 return MIS_weight * in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
             }
@@ -819,8 +819,8 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
 
                     const double path_pdf = getDiffuseProbability(n, x_L);
                     const double nee_pdf = (dist * dist) / (area * cos_light);
-//                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-                    const double MIS_weight = 0.5f;
+                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                    const double MIS_weight = 0.5f;
 
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
@@ -834,8 +834,8 @@ Eigen::Vector3d Renderer::computeDirectLighting_MIS(const Ray &in_Ray, const Ray
 
                     const double path_pdf = getBlinnPhongProbability(in_Ray.d, n, x_L, m);
                     const double nee_pdf = (dist * dist) / (area * cos_light);
-//                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
-                    const double MIS_weight = 0.5f;
+                    const double MIS_weight = (nee_pdf * nee_pdf) / (nee_pdf * nee_pdf + path_pdf * path_pdf);
+//                    const double MIS_weight = 0.5f;
 
                     I += MIS_weight * area * in_AreaLights[i].intensity * in_AreaLights[i].color.cwiseProduct(BSDF * G);
                     break;
