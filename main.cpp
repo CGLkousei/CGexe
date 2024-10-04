@@ -33,7 +33,7 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-std::vector<int> modes = {6};
+std::vector<int> modes = {3};
 std::vector<int> path_lengths = {2};
 int mode_index = 0;
 int path_index = 0;
@@ -49,7 +49,6 @@ clock_t end_time;
 
 int width = 640;
 int height = 480;
-
 
 double g_FrameSize_WindowSize_Scale_x = 1.0;
 double g_FrameSize_WindowSize_Scale_y = 1.0;
