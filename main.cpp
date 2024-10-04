@@ -38,7 +38,7 @@ std::vector<int> path_lengths = {2};
 int mode_index = 0;
 int path_index = 0;
 unsigned int samples = 5000;
-unsigned int nSamplesPerPixel = 1000;
+unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
 const std::string filename = "mode___";
@@ -240,6 +240,28 @@ int main(int argc, char *argv[]) {
 
     g_renderer.setNsamples(nSamplesPerPixel, samples);
     g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia);
+
+//    Ray ray; ray.depth = 0;
+//    g_Camera.screenView(1, 1, ray);
+//    ray.prev_mesh_idx = -99;
+//    ray.prev_primitive_idx = -1;
+//    RayHit in_RayHit;
+//    g_renderer.rayTracing(g_Obj, g_AreaLights, ray, in_RayHit);
+//    Ray new_ray; new_ray.depth = 0;
+//    new_ray.prev_mesh_idx = -99;
+//    new_ray.prev_primitive_idx = -1;
+//    new_ray.o = ray.o + in_RayHit.t * ray.d;
+//    new_ray.d = - ray.d;
+//    RayHit new_rayhit;
+//    Eigen::Vector2i pixels = g_renderer.rayCameraIntersect(g_renderer.g_Camera, new_ray, new_rayhit);
+//    if(new_rayhit.t < in_RayHit.t * 2){
+//        std::cout << "in_RayHit.t: " << in_RayHit.t << std::endl;
+//        std::cout << "new_RayHit.t: " << new_rayhit.t << std::endl;
+//        std::cout << "Pixel: " << pixels.transpose() << std::endl;
+//    }
+//    else{
+//        std::cout << "BIG!!" << std::endl;
+//    }
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 

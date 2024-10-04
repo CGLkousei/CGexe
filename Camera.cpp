@@ -106,6 +106,10 @@ Eigen::Vector3d Camera::getZVector() const {
     return m_zVector;
 }
 
+Eigen::Vector3d Camera::getCenterPoint() const {
+    return - m_zVector * m_FocalLength + m_EyePoint;
+}
+
 double Camera::getDistanceToObject() const {
     return m_DistanceToObject;
 }

@@ -3,6 +3,7 @@
 //
 
 #include <cstdlib>
+#include <iostream>
 #include "Renderer.h"
 #include "random.h"
 #include "Image.h"
@@ -176,6 +177,58 @@ void Renderer::rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights
     out_Result.alpha = u;
     out_Result.beta = v;
     out_Result.isFront = isFront;
+}
+
+Eigen::Vector2i Renderer::rayCameraIntersect(const Camera &in_Camera, const Ray &in_Ray, RayHit &out_Result) {
+    out_Result.t = __FAR__;
+
+    const Eigen::Vector3d ray_to_camera = in_Camera.getEyePoint() - in_Ray.o;
+    const Eigen::Vector3d parallel = ray_to_camera.dot(in_Ray.d) * in_Ray.d;
+    const double distance = (ray_to_camera - parallel).norm();
+
+    if(distance > 1e-5)
+        return Eigen::Vector2i::Zero();
+
+    const double camera_t = parallel.norm();
+    if(camera_t <= 0.0)
+        return Eigen::Vector2i::Zero();
+
+    const Eigen::Vector3d n = -in_Camera.getZVector();
+
+    const double denominator = n.dot(in_Ray.d);
+    if(denominator >= 0.0)
+        return Eigen::Vector2i::Zero();
+
+    const Eigen::Vector3d left_up_point = in_Camera.getEyePoint() + n * in_Camera.getFocalLength();
+    const double film_t = n.dot(left_up_point - in_Ray.o) / denominator;
+
+    if(film_t <= 0.0)
+        return Eigen::Vector2i::Zero();
+
+    const Eigen::Vector3d x = in_Ray.o + film_t * in_Ray.d;
+    const Eigen::Vector3d center_to_hit = x - in_Camera.getCenterPoint();
+
+    const Eigen::Vector3d m_x_Vector = in_Camera.getXVector();
+    const Eigen::Vector3d m_y_Vector = in_Camera.getYVector();
+
+    const double halfScreenWidth = in_Camera.getScreenWidth() * 0.5;
+    const double halfScreenHeight = in_Camera.getScreenHeight() * 0.5;
+
+    const double x_length = (center_to_hit.dot(m_x_Vector) * m_x_Vector).norm();
+    const double y_length = (center_to_hit.dot(m_y_Vector) * m_y_Vector).norm();
+
+    if((abs(x_length) - halfScreenWidth < 1e-6) && (abs(y_length - halfScreenHeight < 1e-6))){
+        out_Result.t = film_t;
+
+        int x_pixel = static_cast<int>((x_length + halfScreenWidth) / halfScreenWidth / 2.0 * g_FilmWidth);
+        x_pixel = (x_pixel == g_FilmWidth) ? x_pixel-1 : x_pixel;
+        int y_pixel = static_cast<int>((y_length + halfScreenHeight) / halfScreenHeight / 2.0 * g_FilmHeight);
+        y_pixel = (y_pixel == g_FilmHeight) ? y_pixel-1 : y_pixel;
+
+        return Eigen::Vector2i{x_pixel, y_pixel};
+    }
+
+    return Eigen::Vector2i::Zero();
 }
 
 void Renderer::rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Ray &in_Ray, RayHit &io_Hit) {

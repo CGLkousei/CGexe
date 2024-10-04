@@ -57,6 +57,8 @@ public:
 
     Eigen::Vector3d getZVector() const;
 
+    Eigen::Vector3d getCenterPoint() const;
+
     double getDistanceToObject() const;
 
     double getFocalLength() const;

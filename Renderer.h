@@ -62,6 +62,7 @@ public:
 
     void rayTriangleIntersect(const TriMesh &in_Mesh, const int in_Triangle_idx, const Ray &in_Ray, RayHit &out_Result);
     void rayAreaLightIntersect(const std::vector<AreaLight> &in_AreaLights, const int in_Light_idx, const Ray &in_Ray, RayHit &out_Result);
+    Eigen::Vector2i rayCameraIntersect(const Camera &in_Camera, const Ray &in_Ray, RayHit &out_Result);
 
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Ray &in_Ray, RayHit &io_Hit);
     void rayTracing(const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<ParticipatingMedia> &all_medias, const Ray &in_Ray, RayHit &io_Hit);
