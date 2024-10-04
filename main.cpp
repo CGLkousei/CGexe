@@ -34,10 +34,10 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-std::vector<int> modes = {1};
+std::vector<int> modes = {4};
 int mode_index = 0;
 unsigned int samples = 5000;
-unsigned int nSamplesPerPixel = 1000;
+unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
 const std::string filename = "mode";
@@ -84,12 +84,13 @@ void initAreaLights() {
 }
 void setHair(Hair &hairs, Eigen::Vector3d w){
     const Eigen::Vector3d color(0.3, 0.3, 0.3);
-//    const Eigen::Vector3d color(0.52, 0.2, 0.12);
-    const double absorb = 0.5;
+//    const Eigen::Vector3d color(0.9, 0.9, 0.9);
+//    const double absorb = 0.5;
+    const double absorb = 0.01;
     const double alpha = -5;
     const double beta = 5;
     const double eta = 1.55;
-    const double radius = 0.01;
+    const double radius = 0.05;
 
     for(int i = 0; i < hairs.hairs.size(); i++){
         hairs.hairs[i].setRadius(radius);
@@ -125,7 +126,6 @@ void saveImg(std::string filename, std::string directory){
         if(mode_index >= modes.size()) {
             glutLeaveMainLoop();
         }
-
 
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();
