@@ -61,6 +61,7 @@ struct TriCurb {
     std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i>> lines;
     std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> u;
     std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> w;
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> v;
 
     double radius;
     HairMaterial hair_material;
@@ -69,6 +70,7 @@ struct TriCurb {
     void setMaterial(const Eigen::Vector3d &set_color, const double set_absorb, const double set_alpha, const double set_beta, const double set_eta);
     void setUVector();
     void setWVector(Eigen::Vector3d world);
+    void setVVector();
 };
 
 struct Object {

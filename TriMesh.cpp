@@ -639,3 +639,9 @@ void TriCurb::setWVector(Eigen::Vector3d world) {
         w[i].normalized();
     }
 }
+void TriCurb::setVVector() {
+    v.resize(lines.size());
+    for (int i = 0; i < lines.size(); i++){
+        v[i] = u[i].cross(w[i]);
+    }
+}

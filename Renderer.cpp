@@ -354,7 +354,7 @@ void Renderer::rendering(const int mode) {
 
             switch(mode){
                 case 1: {
-                    I += computePathTrace(ray, g_Obj, g_AreaLights, g_Hair, true);
+                    I += computePathTrace(ray, g_Obj, g_AreaLights, g_Hair);
                     break;
                 }
                 case 2: {
@@ -391,7 +391,7 @@ void Renderer::rendering(const int mode) {
     }
 }
 
-Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, bool first) {
+Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair) {
     if(in_Ray.depth > MAX_RAY_DEPTH)
         return Eigen::Vector3d::Zero();
 
@@ -406,7 +406,6 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         if (!in_RayHit.isFront)
             return Eigen::Vector3d::Zero();
 
-        first = false;
         return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
     }
 
@@ -414,20 +413,26 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
 
     if (in_RayHit.isHair){
-        const Eigen::Vector3d n = in_RayHit.n;
+        const Eigen::Vector3d u = in_Hair.hairs[in_RayHit.mesh_idx].u[in_RayHit.primitive_idx];
+        const Eigen::Vector3d d_parallel_u = in_Ray.d.dot(u) * u;
+        const Eigen::Vector3d d_vertical_u = x - d_parallel_u;
 
         const Eigen::Vector3d w = in_Hair.hairs[in_RayHit.mesh_idx].w[in_RayHit.primitive_idx];
-        const double phi_i = n.dot(w);
+        const Eigen::Vector3d d_parallel_w = in_Ray.d.dot(w) * w;
+        const Eigen::Vector3d d_vertical_w = x - d_parallel_w;
 
-        const double cosine_theta_i = n.dot(-in_Ray.d);
+        const Eigen::Vector3d n = in_RayHit.n;
+
+        const double cosine_phi_i = n.dot(- d_vertical_u.normalized());
+        const double phi_i = acos(cosine_phi_i);
+        const double sine_phi_i = sin(phi_i);
+
+        const double cosine_theta_i = in_Hair.hairs[in_RayHit.mesh_idx].v[in_RayHit.primitive_idx].dot(- d_vertical_w.normalized());
         const double theta_i = acos(cosine_theta_i);
         const double sine_theta_i = sin(theta_i);
 
         const double eta = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.eta;
         const double eta_1 = sqrt(eta * eta - sine_theta_i * sine_theta_i) / cosine_theta_i;
-
-        const double sine_phi_i = sin(phi_i);
-        const double cosine_phi_i = cos(phi_i);
 
         const double R_reflectance = FrDielectric(cosine_phi_i, 1.0f, eta);
         const double c = asin(1 / eta_1);
@@ -440,14 +445,14 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
             const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_i);
 
             marschnerSample(x, new_ray, in_RayHit, in_Hair, theta_i, phi_i, c, in_Ray.depth, 0);
-            if(!first)
-                I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp / (cosine_theta_i * R_reflectance);
+//            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp / (cosine_theta_i * R_reflectance);
         }
         else{
             const double sine_phi_t = sine_phi_i / eta;
             const double cosine_phi_t = sqrt(1.0f - sine_phi_t * sine_phi_t);
 
             const double TT_reflectance = FrDielectric(cosine_phi_t, eta, 1.0f);
+//            std::cout << TT_reflectance + R_reflectance << std::endl;
             const double absorption = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.absorb;
             const double Att = (1.0f - R_reflectance) * (1.0f - R_reflectance) * getTransmittance(absorption, sine_phi_i, cosine_phi_t);
             if(r < R_reflectance + TT_reflectance){
@@ -457,8 +462,7 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
                 const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(1, theta_i);
 
                 marschnerSample(x, new_ray, in_RayHit, in_Hair, theta_i, phi_i, c, in_Ray.depth, 1);
-                if(!first)
-                    I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp / (cosine_theta_i * (R_reflectance + TT_reflectance));
+//                I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp / (cosine_theta_i * (R_reflectance + TT_reflectance));
             }
             else{
                 //TRT mode
@@ -467,8 +471,7 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
                 const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(2, theta_i);
 
                 marschnerSample(x, new_ray, in_RayHit, in_Hair, theta_i, phi_i, c, in_Ray.depth, 2);
-                if(!first)
-                    I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp / (cosine_theta_i * (R_reflectance + 1 - TT_reflectance));
+//                I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp / (cosine_theta_i * (R_reflectance + 1 - TT_reflectance));
             }
         }
     }
@@ -481,7 +484,7 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
 
         if(r < kd){
             diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
-            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
         }
         else if(r < kd + ks){
             const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
@@ -489,11 +492,10 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
             if(pdf < 0.0f)
                 return I;
             const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
-            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
+            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
         }
     }
 
-    first = false;
     return I;
 }
 

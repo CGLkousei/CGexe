@@ -34,10 +34,10 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-std::vector<int> modes = {4};
+std::vector<int> modes = {1};
 int mode_index = 0;
-unsigned int samples = 5000;
-unsigned int nSamplesPerPixel = 1;
+unsigned int samples = 50000;
+unsigned int nSamplesPerPixel = 100;
 bool save_flag = false;
 
 const std::string filename = "mode";
@@ -97,6 +97,7 @@ void setHair(Hair &hairs, Eigen::Vector3d w){
         hairs.hairs[i].setMaterial(color, absorb, alpha, beta, eta);
         hairs.hairs[i].setUVector();
         hairs.hairs[i].setWVector(w);
+        hairs.hairs[i].setVVector();
     }
 }
 void changeMode(const unsigned int samples){
