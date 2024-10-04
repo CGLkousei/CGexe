@@ -454,6 +454,7 @@ void Renderer::rendering(const int mode) {
                     I += Light_intensity.cwiseProduct(computeLightTrace(light_ray, g_Obj, g_AreaLights, pixels));
 
                     pixel_flat_idx = pixels.y() * g_FilmWidth + pixels.x();
+                    break;
                 }
             }
         }
