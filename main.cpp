@@ -33,11 +33,11 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-std::vector<int> modes = {3};
+std::vector<int> modes = {7};
 std::vector<int> path_lengths = {2};
 int mode_index = 0;
 int path_index = 0;
-unsigned int samples = 5000;
+unsigned int samples = 1e30;
 unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
