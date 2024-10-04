@@ -37,7 +37,7 @@ std::vector<int> modes = {7};
 std::vector<int> path_lengths = {2};
 int mode_index = 0;
 int path_index = 0;
-unsigned int samples = 1e30;
+unsigned int samples = 1e20;
 unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 

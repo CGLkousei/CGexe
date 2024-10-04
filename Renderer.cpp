@@ -186,7 +186,7 @@ Eigen::Vector2i Renderer::rayCameraIntersect(const Camera &in_Camera, const Ray 
     const Eigen::Vector3d parallel = ray_to_camera.dot(in_Ray.d) * in_Ray.d;
     const double distance = (ray_to_camera - parallel).norm();
 
-    if(distance > 1e-5)
+    if(distance > 1)
         return Eigen::Vector2i::Zero();
 
     const double camera_t = parallel.norm();
@@ -447,7 +447,7 @@ void Renderer::rendering(const int mode) {
                     const Eigen::Vector3d light_point = sampleRandomPoint(g_AreaLights[light_index]);
                     Ray light_ray; RayHit light_rayHit;
 
-                    const double pdf = HemisphericSample(light_point, light_normal, light_ray, light_index);
+                    double pdf = HemisphericSample(light_point, light_normal, light_ray, light_index);
                     Light_intensity /= pdf;
 
                     Eigen::Vector2i pixels;
@@ -689,6 +689,7 @@ Eigen::Vector3d Renderer::computeLightTrace(const Ray &in_Ray, const Object &in_
 //        const Eigen::Vector3d n = in_AreaLights[in_RayHit.primitive_idx].arm_u.cross(in_AreaLights[in_RayHit.primitive_idx].arm_v).normalized();
 //        diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
 //        return computeLightTrace(new_ray, in_Object, in_AreaLights, pixels);
+
         return Eigen::Vector3d::Zero();
     }
 
