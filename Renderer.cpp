@@ -413,10 +413,59 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
 
     if (in_RayHit.isHair){
         const Eigen::Vector3d n = in_RayHit.n;
-        const double cosine_t = n.dot(in_Ray.d);
-        const double sine_t = sin(acos(cosine_t));
 
-        const double cosine_f = cosine_t * sqrt(1.0f - sine_t * sine_t);
+        const Eigen::Vector3d w = in_Hair.hairs[in_RayHit.mesh_idx].w[in_RayHit.primitive_idx];
+        const double phi_i = n.dot(w);
+
+        const double cosine_theta_i = n.dot(-in_Ray.d);
+        const double theta_i = acos(cosine_theta_i);
+        const double sine_theta_i = sin(theta_i);
+
+        const double eta = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.eta;
+        const double eta_1 = sqrt(eta * eta - sine_theta_i * sine_theta_i) / cosine_theta_i;
+
+        const double sine_phi_i = sin(phi_i);
+        const double cosine_phi_i = cos(phi_i);
+
+        const double R_reflectance = FrDielectric(cosine_phi_i, 1.0f, eta);
+        const double c = asin(1 / eta_1);
+
+        const double r = randomMT();
+        if(r < R_reflectance){
+            //R mode
+            const double micro_variation = -2.0f / sqrt(1.0f - sine_phi_i * sine_phi_i);
+            const double Np = R_reflectance / (2.0f * micro_variation);
+            const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_i);
+
+            marschnerSample(x, new_ray, in_RayHit, in_Hair, theta_i, phi_i, c, in_Ray.depth, 0);
+            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair) * Np * Mp / (cosine_theta_i * R_reflectance);
+        }
+        else{
+            const double sine_phi_t = sine_phi_i / eta;
+            const double cosine_phi_t = sqrt(1.0f - sine_phi_t * sine_phi_t);
+
+            const double TT_reflectance = FrDielectric(cosine_phi_t, eta, 1.0f);
+            const double absorption = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.absorb;
+            const double Att = (1.0f - R_reflectance) * (1.0f - R_reflectance) * getTransmittance(absorption, sine_phi_i, cosine_phi_t);
+            if(r < R_reflectance + TT_reflectance){
+                //TT mode
+                const double micro_variation = (6.0f * c - 2.0f) - (24.0f * c * phi_i * phi_i / pow(__PI__, 3.0f)) / sqrt(1.0f - sine_phi_i * sine_phi_i);
+                const double Np = Att / (2.0f * micro_variation);
+                const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(1, theta_i);
+
+                marschnerSample(x, new_ray, in_RayHit, in_Hair, theta_i, phi_i, c, in_Ray.depth, 1);
+                I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair) * Np * Mp / (cosine_theta_i * (R_reflectance + TT_reflectance));
+            }
+            else{
+                //TRT mode
+                const double micro_variation = (12.0f * c - 2.0f) - (48.0f * c * phi_i * phi_i / pow(__PI__, 3.0f)) / sqrt(1.0f - sine_phi_i * sine_phi_i);
+                const double Np = Att * TT_reflectance * getTransmittance(absorption, sine_phi_i, cosine_phi_t) / (2.0f * micro_variation);
+                const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(2, theta_i);
+
+                marschnerSample(x, new_ray, in_RayHit, in_Hair, theta_i, phi_i, c, in_Ray.depth, 2);
+                I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair) * Np * Mp / (cosine_theta_i * (R_reflectance + 1 - TT_reflectance));
+            }
+        }
     }
     else {
         const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
@@ -437,10 +486,9 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
             const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
             I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
         }
-
-        return I;
     }
 
+    return I;
 }
 
 Eigen::Vector3d Renderer::computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const Hair &in_Hair, bool first) {
@@ -739,8 +787,8 @@ double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vect
     Eigen::Vector3d halfVector = _dx * bn + _dy * in_n + _dz * cn;
     halfVector.normalize();
 
-    const Eigen::Vector3d o_parallel = (-1 * in_direction).dot(halfVector) * halfVector;
-    const Eigen::Vector3d o_vertical = (-1 * in_direction) - o_parallel;
+    const Eigen::Vector3d o_parallel = (-in_direction).dot(halfVector) * halfVector;
+    const Eigen::Vector3d o_vertical = (-in_direction) - o_parallel;
 
     out_ray.o = in_x;
     out_ray.d = (o_parallel - o_vertical).normalized();
@@ -752,6 +800,58 @@ double Renderer::blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vect
         return -1.0f;
 
     return (m + 1) * pow(cos(theta), m) / (2.0f * __PI__);
+}
+
+double Renderer::refractionSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double eta, const int depth) {
+    Eigen::Vector3d bn =
+            in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].x()] -
+            in_Object.meshes[rayHit.mesh_idx].vertices[in_Object.meshes[rayHit.mesh_idx].triangles[rayHit.primitive_idx].z()];
+
+    bn.normalize();
+
+    const Eigen::Vector3d cn = bn.cross(in_n);
+
+    const double e_dot_n = in_n.dot(-in_direction);
+    const double inside_sqrt = 1.0f - eta * eta * (1.0f - e_dot_n * e_dot_n);
+
+    Eigen::Vector3d x_L;
+    if(inside_sqrt < 0.0){
+        //全反射
+        x_L = 2.0 * in_n * e_dot_n + in_direction;
+    }
+    else{
+        //透過
+        x_L = - in_n * inside_sqrt - eta * (-in_direction - e_dot_n * in_n);
+    }
+
+    x_L.normalize();
+    out_ray.o = in_x;
+    out_ray.d = x_L;
+    out_ray.prev_mesh_idx = rayHit.mesh_idx;
+    out_ray.prev_primitive_idx = rayHit.primitive_idx;
+    out_ray.depth = depth + 1;
+
+    return eta * eta / e_dot_n;
+}
+
+double Renderer::marschnerSample(const Eigen::Vector3d &in_x, Ray &out_ray, const RayHit &rayHit, const Hair &in_Hair,
+                                const double theta, const double phi, const double c, const int depth, int p) {
+    p = p > 2 ? p : 2;
+    const double _phi = phi + (6.0f * p * c / __PI__ - 2.0f) * phi - (8.0f * p * c * pow(phi, 3.0) / pow(__PI__, 3.0)) + (p * __PI__);
+
+    const double _dx = sin(theta) * cos(_phi);
+    const double _dy = cos(theta);
+    const double _dz = sin(theta) * sin(_phi);
+
+    Eigen::Vector3d x_L = Eigen::Vector3d{_dx, _dy, _dz};
+    x_L.normalize();
+    out_ray.o = in_x;
+    out_ray.d = x_L;
+    out_ray.prev_mesh_idx = rayHit.mesh_idx;
+    out_ray.prev_primitive_idx = rayHit.primitive_idx;
+    out_ray.depth = depth + 1;
+
+    return 1.0f;
 }
 
 double Renderer::FrDielectric(double cosine, double etaI, double etaT) const {
@@ -776,10 +876,10 @@ double Renderer::FrDielectric(double cosine, double etaI, double etaT) const {
     return (Rpar1 * Rpar1 + Rperp * Rperp) * 0.5f;
 }
 
-double Renderer::getTransmittance(double absorption, double h, double theta_t) const {
+double Renderer::getTransmittance(double absorption, double h, double cosine_t) const {
     const double gamma = acos(h);
     const double cosine_g = cos(2.0f * gamma);
 
-    const double _absorption = absorption / cos(theta_t);
+    const double _absorption = absorption / cosine_t;
     return exp(-2.0f * _absorption * (1 + cosine_g));
 }

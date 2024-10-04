@@ -74,9 +74,11 @@ public:
 
     double diffuseSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const int depth);
     double blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth);
+    double refractionSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double eta, const int depth);
+    double marschnerSample(const Eigen::Vector3d &in_x, Ray &out_ray, const RayHit &rayHit, const Hair &in_Hair, const double theta, const double phi, const double c, const int depth, int p);
 
     double FrDielectric(double cosine, double etaI, double etaT) const;
-    double getTransmittance(double absorption, double h, double theta_t) const;
+    double getTransmittance(double absorption, double h, double cosine_t) const;
 };
 
 #endif //CGEXE_RENDERER_H

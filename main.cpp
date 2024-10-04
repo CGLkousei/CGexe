@@ -34,23 +34,20 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-int mode = 4;
-const int limit = 4;
-unsigned int samples = 100;
-unsigned int nSamplesPerPixel = 1;
+std::vector<int> modes = {1};
+int mode_index = 0;
+unsigned int samples = 5000;
+unsigned int nSamplesPerPixel = 1000;
 bool save_flag = false;
 
 const std::string filename = "mode";
-const std::string directoryname = "hair";
+const std::string directoryname = "hair_1";
 
 clock_t start_time;
 clock_t end_time;
 
 int width = 640;
 int height = 480;
-
-int g_MM_LIGHT_idx = 0;
-int mx, my;
 
 double g_FrameSize_WindowSize_Scale_x = 1.0;
 double g_FrameSize_WindowSize_Scale_y = 1.0;
@@ -85,30 +82,33 @@ void initAreaLights() {
 
     g_AreaLights.push_back(light1);
 }
-void setHairMaterial(Hair &hairs){
-    const Eigen::Vector3d color(0.0, 0.0, 0.0);
+void setHair(Hair &hairs, Eigen::Vector3d w){
+    const Eigen::Vector3d color(0.3, 0.3, 0.3);
 //    const Eigen::Vector3d color(0.52, 0.2, 0.12);
     const double absorb = 0.5;
     const double alpha = -5;
     const double beta = 5;
+    const double eta = 1.55;
     const double radius = 0.01;
 
     for(int i = 0; i < hairs.hairs.size(); i++){
         hairs.hairs[i].setRadius(radius);
-        hairs.hairs[i].setMaterial(color, absorb, alpha, beta);
+        hairs.hairs[i].setMaterial(color, absorb, alpha, beta, eta);
+        hairs.hairs[i].setUVector();
+        hairs.hairs[i].setWVector(w);
     }
 }
-void changeMode(const unsigned int samples, const int limit, std::string filename, std::string directory){
+void changeMode(const unsigned int samples){
     if(g_renderer.g_CountBuffer[0] >= samples){
         save_flag = true;
         end_time = clock();
     }
 }
-void saveImg(const int limit, std::string filename, std::string directory){
+void saveImg(std::string filename, std::string directory){
     if(save_flag){
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
-        std::string file_str = filename + std::to_string(mode) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+        std::string file_str = filename + std::to_string(modes[mode_index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
         //make the directory
         if(!std::filesystem::exists(directory)){
@@ -119,11 +119,13 @@ void saveImg(const int limit, std::string filename, std::string directory){
         }
 
         g_renderer.saveImg( directory + "/" + file_str);
-        std::cout << "Rendering mode " << mode << " takes " << time_str << " second." << std::endl << std::endl;
+        std::cout << "Rendering mode " << modes[mode_index] << " takes " << time_str << " second." << std::endl << std::endl;
 
-        mode++;
-        if(mode > limit)
+        mode_index++;
+        if(mode_index >= modes.size()) {
             glutLeaveMainLoop();
+        }
+
 
         g_renderer.resetFilm();
         g_renderer.clearRayTracedResult();
@@ -155,13 +157,13 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     if(!save_flag) {
-        g_renderer.rendering(mode);
+        g_renderer.rendering(modes[mode_index]);
         g_renderer.updateFilm();
         updateFilm();
     }
 
-    saveImg(limit, filename, directoryname);
-    changeMode(samples, limit, filename, directoryname);
+    saveImg(filename, directoryname);
+    changeMode(samples);
 
     glutPostRedisplay();
 }
@@ -224,7 +226,7 @@ int main(int argc, char *argv[]) {
     initFilm();
     loadObj("../obj/hair_one_line.obj", g_Obj, g_Hair);
 
-    setHairMaterial(g_Hair);
+    setHair(g_Hair, Eigen::Vector3d{0.0, 1.0, 0.0});
 //    for(int i = 0; i < g_Hair.hairs.size(); i++){
 //        std::cout << g_Hair.hairs[i].vertices.size() << std::endl;
 //        std::cout << g_Hair.hairs[i].lines.size() << std::endl;

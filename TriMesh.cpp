@@ -612,12 +612,30 @@ double HairMaterial::getMp(const int p, const double theta) const {
 }
 
 void TriCurb::setMaterial(const Eigen::Vector3d &set_color, const double set_absorb, const double set_alpha,
-                          const double set_beta) {
+                          const double set_beta, const double set_eta) {
     hair_material.color = set_color;
     hair_material.absorb = set_absorb;
     hair_material.alpha = set_alpha;
     hair_material.beta = set_beta;
+    hair_material.eta = set_eta;
+
 }
 void TriCurb::setRadius(const double r) {
     radius = r;
+}
+void TriCurb::setUVector() {
+    u.resize(lines.size());
+    for (int i = 0; i < lines.size(); i++){
+        const Eigen::Vector3d v1 = vertices[lines[i].x()];
+        const Eigen::Vector3d v2 = vertices[lines[i].y()];
+
+        u[i] = (v2 - v1).normalized();
+    }
+}
+void TriCurb::setWVector(Eigen::Vector3d world) {
+    w.resize(lines.size());
+    for (int i = 0; i < lines.size(); i++){
+        w[i] = world - world.dot(u[i]) * u[i];
+        w[i].normalized();
+    }
 }
