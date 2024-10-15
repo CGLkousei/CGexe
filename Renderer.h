@@ -51,7 +51,7 @@ public:
     Renderer();
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
 
-    void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights, std::vector<ParticipatingMedia> media);
+    void set3Dscene(Camera camera, Object obj, std::vector<AreaLight> lights, std::vector<ParticipatingMedia> media, std::vector<int> lengths);
     void setNsamples(const unsigned int nSample, const unsigned int samples);
 
     void resetFilm();

@@ -33,16 +33,16 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-std::vector<int> modes = {7};
-std::vector<int> path_lengths = {2};
+std::vector<int> modes = {6};
+std::vector<int> path_lengths = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 int mode_index = 0;
 int path_index = 0;
-unsigned int samples = 1e20;
-unsigned int nSamplesPerPixel = 1;
+unsigned int samples = 1e3;
+unsigned int nSamplesPerPixel = 1e3;
 bool save_flag = false;
 
-const std::string filename = "mode___";
-const std::string directoryname = "Bidirectional5";
+const std::string filename = "length_";
+const std::string directoryname = "Bidirectional_Debug";
 
 clock_t start_time;
 clock_t end_time;
@@ -114,7 +114,7 @@ void saveImg(std::string filename, std::string directory){
     if(save_flag){
         const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
         std::string time_str = std::to_string(static_cast<int>(rendering_time));
-        std::string file_str = filename + std::to_string(modes[mode_index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+        std::string file_str = filename + std::to_string(path_lengths[path_index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
 
         //make the directory
         if(!std::filesystem::exists(directory)){
@@ -131,6 +131,8 @@ void saveImg(std::string filename, std::string directory){
         if(mode_index >= modes.size()){
             mode_index = 0;
             path_index++;
+
+            g_renderer.path_length = path_lengths[path_index];
 
             if(path_index >= path_lengths.size())
                 glutLeaveMainLoop();
@@ -167,7 +169,6 @@ void idle() {
     Sleep(1000.0 / 60.0);
 #endif
     if(!save_flag) {
-        g_renderer.path_length = path_lengths[path_index];
         g_renderer.rendering(modes[mode_index]);
         g_renderer.updateFilm();
         updateFilm();
@@ -239,7 +240,7 @@ int main(int argc, char *argv[]) {
     loadObj("../obj/room.obj", g_Obj);
 
     g_renderer.setNsamples(nSamplesPerPixel, samples);
-    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia);
+    g_renderer.set3Dscene(g_Camera, g_Obj, g_AreaLights, g_ParticipatingMedia, path_lengths);
 
 //    Ray ray; ray.depth = 0;
 //    g_Camera.screenView(1, 1, ray);
