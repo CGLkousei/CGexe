@@ -214,15 +214,15 @@ Eigen::Vector2i Renderer::rayCameraIntersect(const Camera &in_Camera, const Ray 
     const double halfScreenWidth = in_Camera.getScreenWidth() * 0.5;
     const double halfScreenHeight = in_Camera.getScreenHeight() * 0.5;
 
-    const double x_length = (center_to_hit.dot(m_x_Vector) * m_x_Vector).norm();
-    const double y_length = (center_to_hit.dot(m_y_Vector) * m_y_Vector).norm();
+    const double x_length = center_to_hit.dot(m_x_Vector);
+    const double y_length = center_to_hit.dot(m_y_Vector);
 
-    if((abs(x_length) - halfScreenWidth < 1e-6) && (abs(y_length - halfScreenHeight < 1e-6))){
+    if((abs(x_length) < halfScreenWidth) && (abs(y_length) < halfScreenHeight)){
         out_Result.t = film_t;
 
         int x_pixel = static_cast<int>((x_length + halfScreenWidth) / halfScreenWidth / 2.0 * g_FilmWidth);
         x_pixel = (x_pixel == g_FilmWidth) ? x_pixel-1 : x_pixel;
-        int y_pixel = static_cast<int>((y_length + halfScreenHeight) / halfScreenHeight / 2.0 * g_FilmHeight);
+        int y_pixel = static_cast<int>((halfScreenHeight - y_length) / halfScreenHeight / 2.0 * g_FilmHeight);
         y_pixel = (y_pixel == g_FilmHeight) ? y_pixel-1 : y_pixel;
 
         return Eigen::Vector2i{x_pixel, y_pixel};
