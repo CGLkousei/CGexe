@@ -33,12 +33,12 @@ GLuint g_FilmTexture = 0;
 
 bool g_DrawFilm = true;
 
-std::vector<int> modes = {6};
+std::vector<int> modes = {7};
 std::vector<int> path_lengths = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 int mode_index = 0;
 int path_index = 0;
 unsigned int samples = 1e3;
-unsigned int nSamplesPerPixel = 1e3;
+unsigned int nSamplesPerPixel = 1;
 bool save_flag = false;
 
 const std::string filename = "length_";
@@ -168,16 +168,35 @@ void idle() {
 #else
     Sleep(1000.0 / 60.0);
 #endif
-    if(!save_flag) {
-        g_renderer.rendering(modes[mode_index]);
-        g_renderer.updateFilm();
-        updateFilm();
-    }
-
-    saveImg(filename, directoryname);
-    changeMode(samples);
+    g_renderer.rendering(modes[mode_index]);
+    g_renderer.updateFilm();
+    updateFilm();
 
     glutPostRedisplay();
+}
+
+void key(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'S':
+        case 's':
+            end_time = clock();
+            const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
+            std::string time_str = std::to_string(static_cast<int>(rendering_time));
+            std::string file_str = filename + std::to_string(path_lengths[path_index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+
+            //make the directory
+            if(!std::filesystem::exists(directoryname)){
+                if(!std::filesystem::create_directories(directoryname)){
+                    std::cerr << "Failed to create directory: " << directoryname << std::endl;
+                    return;
+                }
+            }
+
+            g_renderer.saveImg( directoryname + "/" + file_str);
+            std::cout << "Rendering mode " << modes[mode_index] << " takes " << time_str << " second." << std::endl << std::endl;
+
+            break;
+    }
 }
 
 void display() {
@@ -234,6 +253,7 @@ int main(int argc, char *argv[]) {
 
     glutDisplayFunc(display);
     glutIdleFunc(idle);
+    glutKeyboardFunc(key);
     glutReshapeFunc(resize);
 
     initFilm();
