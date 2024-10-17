@@ -184,14 +184,14 @@ Eigen::Vector2i Renderer::rayCameraIntersect(const Camera &in_Camera, const Ray 
     out_Result.t = __FAR__;
 
     const Eigen::Vector3d ray_to_camera = in_Camera.getEyePoint() - in_Ray.o;
-    const Eigen::Vector3d parallel = ray_to_camera.dot(in_Ray.d) * in_Ray.d;
+    const double camera_t = ray_to_camera.dot(in_Ray.d);
+    const Eigen::Vector3d parallel = camera_t * in_Ray.d;
     const double distance = (ray_to_camera - parallel).norm();
 
-    if(distance > 1)
+    if(distance > 1e-2)
         return Eigen::Vector2i::Zero();
 
-    const double camera_t = parallel.norm();
-    if(camera_t <= 0.0)
+    if(camera_t < 0.0)
         return Eigen::Vector2i::Zero();
 
     const Eigen::Vector3d n = -in_Camera.getZVector();
