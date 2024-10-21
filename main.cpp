@@ -42,7 +42,7 @@ unsigned int nSamplesPerPixel = 1e3;
 bool save_flag = false;
 
 const std::string filename = "length_";
-const std::string directoryname = "Bidirectional_Debug";
+const std::string directoryname = "Bidirectional_Debug1";
 
 clock_t start_time;
 clock_t end_time;

@@ -1245,7 +1245,9 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
     const int depth = in_Ray.depth;
 
     for(int i = 0; i < in_SubPath.size(); i++){
-        if(i > in_SubPath.size() - 1 || i < 0) return Eigen::Vector3d::Zero();
+        if(i > in_SubPath.size() - 1) return Eigen::Vector3d::Zero();
+
+        if(depth + i != path_length - 1) continue;
 
         Eigen::Vector3d connect_dir = in_SubPath[i].x - x;
         const double dist = connect_dir.norm();
@@ -1279,8 +1281,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                 case 1: {
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
 //                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF) / (depth + i + 2);
-                    if(depth + i == path_length - 1)
-                        I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
+                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
                     break;
                 }
                 case 2: {
@@ -1289,8 +1290,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                     const double cosine = std::max<double>(0.0f, n.dot(halfVector));
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__)).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
 //                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF) / (depth + i + 2);
-                    if(depth + i == path_length - 1)
-                        I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
+                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
                     break;
                 }
             }
