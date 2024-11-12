@@ -47,6 +47,7 @@ public:
     std::vector<ParticipatingMedia> g_ParticipatingMedia;
     Object g_Obj;
     std::vector<SubPath> g_SubPath;
+    std::vector<Eigen::Vector3d> radiances;
 
     Renderer();
     Renderer(Camera camera, Object obj, std::vector<AreaLight> lights);
@@ -74,7 +75,7 @@ public:
     Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights);
     Eigen::Vector3d computeNEE(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
     Eigen::Vector3d computeMIS(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, bool first);
-    Eigen::Vector3d computeBPT(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, bool first);
+    Eigen::Vector3d computeBPT(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, std::vector<Eigen::Vector3d> &radiances, bool first);
     Eigen::Vector3d computeLightTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, Eigen::Vector2i &pixels);
 
     Eigen::Vector3d computePathTrace(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<ParticipatingMedia> &all_media);
@@ -98,7 +99,7 @@ public:
     bool isInParticipatingMedia(const ParticipatingMedia &media, const Eigen::Vector3d &in_point);
     double getFreePath(const std::vector<ParticipatingMedia> &all_medias, const Eigen::Vector3d &in_point, int &index);
 
-    Eigen::Vector3d BidirectinalPathTrace(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const Object &in_Object, const std::vector<SubPath> &in_SubPath, const int mode);
+    Eigen::Vector3d BidirectinalPathTrace(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const Object &in_Object, const std::vector<SubPath> &in_SubPath, std::vector<Eigen::Vector3d> &radiances, const int mode);
     void LightTracing(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, std::vector<SubPath> &in_subpath);
     Eigen::Vector3d setRadiance(const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, const int index, const int light_index);
     void setProbability(std::vector<SubPath> &in_Subpath);

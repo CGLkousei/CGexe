@@ -34,15 +34,15 @@ GLuint g_FilmTexture = 0;
 bool g_DrawFilm = true;
 
 std::vector<int> modes = {6};
-std::vector<int> path_lengths = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+std::vector<int> path_lengths = {5, 6};
 int mode_index = 0;
 int path_index = 0;
-unsigned int samples = 1e3;
+unsigned int samples = 5 * 1e3;
 unsigned int nSamplesPerPixel = 1e3;
 bool save_flag = false;
 
 const std::string filename = "length_";
-const std::string directoryname = "Bidirectional_Debug1";
+const std::string directoryname = "Bidirectional_Debug3";
 
 clock_t start_time;
 clock_t end_time;
@@ -110,40 +110,77 @@ void changeMode(const unsigned int samples){
         end_time = clock();
     }
 }
+
+void updateFilm() {
+    glBindTexture(GL_TEXTURE_2D, g_FilmTexture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_FilmWidth, g_FilmHeight, GL_RGB, GL_FLOAT, g_renderer.g_FilmBuffer);
+}
+
 void saveImg(std::string filename, std::string directory){
-    if(save_flag){
-        const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
-        std::string time_str = std::to_string(static_cast<int>(rendering_time));
-        std::string file_str = filename + std::to_string(path_lengths[path_index]) + "_" + time_str + "s_" + std::to_string(samples) + "sample";
+        if (save_flag) {
+            for(int s = 0; s < path_lengths[path_index]; s++) {
+                std::cout << "Hi" << std::endl;
 
-        //make the directory
-        if(!std::filesystem::exists(directory)){
-            if(!std::filesystem::create_directories(directory)){
-                std::cerr << "Failed to create directory: " << directory << std::endl;
-                return;
+                const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
+                std::string time_str = std::to_string(static_cast<int>(rendering_time));
+                std::string file_str = filename + std::to_string(path_lengths[path_index]) + "_" + time_str + "s_" +
+                                       std::to_string(samples) + "sample";
+
+                //make the directory
+                if (!std::filesystem::exists(directory)) {
+                    if (!std::filesystem::create_directories(directory)) {
+                        std::cerr << "Failed to create directory: " << directory << std::endl;
+                        return;
+                    }
+                }
+                const int index = s * g_FilmWidth * g_FilmHeight;
+                for(int j = 0; j < g_FilmWidth * g_FilmHeight; j++){
+                    if (g_renderer.g_CountBuffer[j] > 0) {
+                        g_renderer.g_FilmBuffer[j * 3] = g_renderer.g_AccumulationBuffer[j * 3 + index] / g_renderer.g_CountBuffer[j];
+                        g_renderer.g_FilmBuffer[j * 3 + 1] = g_renderer.g_AccumulationBuffer[j * 3 + 1 + index] / g_renderer.g_CountBuffer[j];
+                        g_renderer.g_FilmBuffer[j * 3 + 2] = g_renderer.g_AccumulationBuffer[j * 3 + 2 + index] / g_renderer.g_CountBuffer[j];
+                    }
+                    else {
+                        g_renderer.g_FilmBuffer[j * 3] = 0.0;
+                        g_renderer.g_FilmBuffer[j * 3 + 1] = 0.0;
+                        g_renderer.g_FilmBuffer[j * 3 + 2] = 0.0;
+                    }
+                }
+
+                std::cout << "No. " << s << std::endl;
+                std::cout << "Accum: " << g_renderer.g_AccumulationBuffer[index] << std::endl;
+                std::cout << "Film: " << g_renderer.g_FilmBuffer[0] << std::endl;
+                std::cout << "Count: " << g_renderer.g_CountBuffer[0] << std::endl;
+
+                Sleep(1e6 / 60.0);
+                updateFilm();
+
+                g_renderer.saveImg(directory + "/" + file_str);
+                std::cout << "Rendering mode " << path_lengths[path_index] << " takes " << time_str << " second." << std::endl
+                          << std::endl;
+
+
             }
+
+            mode_index++;
+            if (mode_index >= modes.size()) {
+                mode_index = 0;
+                path_index++;
+
+                g_renderer.path_length = path_lengths[path_index];
+                free(g_renderer.g_AccumulationBuffer);
+                g_renderer.g_AccumulationBuffer =(float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3 * path_lengths[path_index]);
+
+                if (path_index >= path_lengths.size())
+                    glutLeaveMainLoop();
+            }
+
+            g_renderer.resetFilm();
+            g_renderer.clearRayTracedResult();
+            save_flag = false;
+            printCurrentTime();
+            start_time = clock();
         }
-
-        g_renderer.saveImg( directory + "/" + file_str);
-        std::cout << "Rendering mode " << modes[mode_index] << " takes " << time_str << " second." << std::endl << std::endl;
-
-        mode_index++;
-        if(mode_index >= modes.size()){
-            mode_index = 0;
-            path_index++;
-
-            g_renderer.path_length = path_lengths[path_index];
-
-            if(path_index >= path_lengths.size())
-                glutLeaveMainLoop();
-        }
-
-        g_renderer.resetFilm();
-        g_renderer.clearRayTracedResult();
-        save_flag = false;
-        printCurrentTime();
-        start_time = clock();
-    }
 }
 
 void initFilm() {
@@ -156,11 +193,6 @@ void initFilm() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
-void updateFilm() {
-    glBindTexture(GL_TEXTURE_2D, g_FilmTexture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_FilmWidth, g_FilmHeight, GL_RGB, GL_FLOAT, g_renderer.g_FilmBuffer);
-}
-
 void idle() {
 #ifdef __APPLE__
     //usleep( 1000*1000 / 60 );
@@ -170,8 +202,8 @@ void idle() {
 #endif
     if(!save_flag) {
         g_renderer.rendering(modes[mode_index]);
-        g_renderer.updateFilm();
-        updateFilm();
+//        g_renderer.updateFilm();
+//        updateFilm();
     }
 
     saveImg(filename, directoryname);

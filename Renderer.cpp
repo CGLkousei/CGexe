@@ -14,7 +14,7 @@
 
 Renderer::Renderer() {
     g_FilmBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
-    g_AccumulationBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
+    g_AccumulationBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3 * path_length);
     g_CountBuffer = (int *) malloc(sizeof(int) * g_FilmWidth * g_FilmHeight);
 
     resetFilm();
@@ -34,8 +34,10 @@ void Renderer::set3Dscene(Camera camera, Object obj, std::vector<AreaLight> ligh
     path_length = lengths[0];
 
     g_FilmBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
-    g_AccumulationBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
+    g_AccumulationBuffer = (float *) malloc(sizeof(float) * g_FilmWidth * g_FilmHeight * 3 * path_length);
     g_CountBuffer = (int *) malloc(sizeof(int) * g_FilmWidth * g_FilmHeight);
+
+    radiances.resize(path_length);
 }
 
 void Renderer::setNsamples(const unsigned int nSample, const unsigned int samples) {
@@ -53,7 +55,7 @@ void Renderer::setNsamples(const unsigned int nSample, const unsigned int sample
 }
 
 void Renderer::resetFilm() {
-    memset(g_AccumulationBuffer, 0, sizeof(float) * g_FilmWidth * g_FilmHeight * 3);
+    memset(g_AccumulationBuffer, 0, sizeof(float) * g_FilmWidth * g_FilmHeight * 3 * path_length);
     memset(g_CountBuffer, 0, sizeof(int) * g_FilmWidth * g_FilmHeight);
 }
 
@@ -368,6 +370,7 @@ void Renderer::rendering(const int mode) {
         Eigen::Vector3d I = Eigen::Vector3d::Zero();
 
         for (int k = 0; k < nSamplesPerPixel; k++) {
+            std::fill(radiances.begin(), radiances.end(), Eigen::Vector3d::Zero());
             double p_x = (g_RayTracingInternalData.nextPixel_i + randomMT()) / g_FilmWidth;
             double p_y = (g_RayTracingInternalData.nextPixel_j + randomMT()) / g_FilmHeight;
 
@@ -430,7 +433,13 @@ void Renderer::rendering(const int mode) {
 
                     setProbability(g_SubPath);
 
-                    I += computeBPT(ray, g_Obj, g_AreaLights, g_SubPath, true);
+                    I += computeBPT(ray, g_Obj, g_AreaLights, g_SubPath, radiances, true);
+                    for(int s = 0; s < radiances.size(); s++){
+                        const int index = s * g_FilmWidth * g_FilmHeight;
+                        g_AccumulationBuffer[pixel_flat_idx * 3 + index] += radiances[s].x();
+                        g_AccumulationBuffer[pixel_flat_idx * 3 + 1 + index] += radiances[s].y();
+                        g_AccumulationBuffer[pixel_flat_idx * 3 + 2 + index] += radiances[s].z();
+                    }
                     break;
                 }
                 case 7: {
@@ -460,9 +469,9 @@ void Renderer::rendering(const int mode) {
             }
         }
 
-        g_AccumulationBuffer[pixel_flat_idx * 3] += I.x();
-        g_AccumulationBuffer[pixel_flat_idx * 3 + 1] += I.y();
-        g_AccumulationBuffer[pixel_flat_idx * 3 + 2] += I.z();
+//        g_AccumulationBuffer[pixel_flat_idx * 3] += I.x();
+//        g_AccumulationBuffer[pixel_flat_idx * 3 + 1] += I.y();
+//        g_AccumulationBuffer[pixel_flat_idx * 3 + 2] += I.z();
         g_CountBuffer[pixel_flat_idx] += nSamplesPerPixel;
     }
 }
@@ -625,7 +634,7 @@ Eigen::Vector3d Renderer::computeMIS(const Ray &in_Ray, const Object &in_Object,
     return I;
 }
 
-Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath, bool first) {
+Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object, const std::vector<AreaLight> &in_AreaLights, const std::vector<SubPath> &in_SubPath,std::vector<Eigen::Vector3d> &radiances, bool first) {
     Ray new_ray; RayHit in_RayHit;
     rayTracing(in_Object, in_AreaLights, in_Ray, in_RayHit);
 
@@ -639,8 +648,11 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
     {
         if (in_RayHit.isFront && first)
             return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
-        else if(in_RayHit.isFront && in_Ray.depth == path_length)
-            return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color / (in_Ray.depth + 1);
+        else if(in_RayHit.isFront && in_Ray.depth == path_length) {
+            radiances[in_Ray.depth] = in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color;
+            return in_AreaLights[in_RayHit.primitive_idx].intensity * in_AreaLights[in_RayHit.primitive_idx].color /
+                   (in_Ray.depth + 1);
+        }
         return Eigen::Vector3d::Zero();
     }
 
@@ -652,14 +664,17 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
     double r = randomMT() * (kd + ks);
 
     if(r < kd)
-        I += BidirectinalPathTrace(in_Ray, in_RayHit, in_AreaLights, in_Object, in_SubPath, 1);
+        I += BidirectinalPathTrace(in_Ray, in_RayHit, in_AreaLights, in_Object, in_SubPath, radiances, 1);
     else if(r < kd + ks)
-        I += BidirectinalPathTrace(in_Ray, in_RayHit, in_AreaLights, in_Object, in_SubPath, 2);
+        I += BidirectinalPathTrace(in_Ray, in_RayHit, in_AreaLights, in_Object, in_SubPath, radiances, 2);
 
     r = randomMT();
     if(r < kd){
         diffuseSample(x, n, new_ray, in_RayHit, in_Object, in_Ray.depth);
-        I += computeBPT(new_ray, in_Object, in_AreaLights, in_SubPath, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+        for(int s = 0; s < radiances.size(); s++){
+            radiances[s] = radiances[s].cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+        }
+        I += computeBPT(new_ray, in_Object, in_AreaLights, in_SubPath, radiances, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
     }
     else if(r < kd + ks){
         const double m = in_Object.meshes[in_RayHit.mesh_idx].material.m;
@@ -668,7 +683,11 @@ Eigen::Vector3d Renderer::computeBPT(const Ray &in_Ray, const Object &in_Object,
             return I;
 
         const double cosine = std::max<double>(0.0f, n.dot(new_ray.d));
-        I += computeBPT(new_ray, in_Object, in_AreaLights, in_SubPath, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
+
+        for(int s = 0; s < radiances.size(); s++){
+            radiances[s] = radiances[s].cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKd()) / kd;
+        }
+        I += computeBPT(new_ray, in_Object, in_AreaLights, in_SubPath, radiances, false).cwiseProduct(in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * cosine * (m + 2.0f)) / (ks * (m + 1.0f));
     }
 
     return I;
@@ -1238,15 +1257,13 @@ double Renderer::getFreePath(const std::vector<ParticipatingMedia> &all_medias, 
     return s_min;
 }
 
-Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const Object &in_Object, const std::vector<SubPath> &in_SubPath, const int mode) {
+Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit &in_RayHit, const std::vector<AreaLight> &in_AreaLights, const Object &in_Object, const std::vector<SubPath> &in_SubPath, std::vector<Eigen::Vector3d> &radiances, const int mode) {
     Eigen::Vector3d I = Eigen::Vector3d::Zero();
     const Eigen::Vector3d x = in_Ray.o + in_RayHit.t * in_Ray.d;
     const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
     const int depth = in_Ray.depth;
 
     for(int i = 0; i < in_SubPath.size(); i++){
-        if(i > in_SubPath.size() - 1) return Eigen::Vector3d::Zero();
-
         if(depth + i != path_length - 1) continue;
 
         Eigen::Vector3d connect_dir = in_SubPath[i].x - x;
@@ -1282,6 +1299,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKd() / __PI__).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
 //                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF) / (depth + i + 2);
                     I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
+                    radiances[depth] = in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
                     break;
                 }
                 case 2: {
@@ -1291,6 +1309,7 @@ Eigen::Vector3d Renderer::BidirectinalPathTrace(const Ray &in_Ray, const RayHit 
                     const Eigen::Vector3d connect_BSDF = (in_Object.meshes[in_RayHit.mesh_idx].material.getKs() * (m + 2.0f) * pow(cosine, m) / (2.0f * __PI__)).cwiseProduct(G * calcGeometry(-connect_dir, in_Object, in_SubPath, i));
 //                    I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF) / (depth + i + 2);
                     I += in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
+                    radiances[depth] = in_SubPath[i].radiance.cwiseProduct(connect_BSDF);
                     break;
                 }
             }
