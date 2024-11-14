@@ -112,8 +112,10 @@ void changeMode(const unsigned int samples){
 }
 
 void updateFilm() {
+    std::cout << "Start" << std::endl;
     glBindTexture(GL_TEXTURE_2D, g_FilmTexture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_FilmWidth, g_FilmHeight, GL_RGB, GL_FLOAT, g_renderer.g_FilmBuffer);
+    std::cout << "End" << std::endl;
 }
 
 void saveImg(std::string filename, std::string directory){
@@ -123,7 +125,7 @@ void saveImg(std::string filename, std::string directory){
 
                 const double rendering_time = static_cast<double>(end_time - start_time) / CLOCKS_PER_SEC;
                 std::string time_str = std::to_string(static_cast<int>(rendering_time));
-                std::string file_str = filename + std::to_string(path_lengths[path_index]) + "_" + time_str + "s_" +
+                std::string file_str = filename + std::to_string(s + 1) + "_" + time_str + "s_" +
                                        std::to_string(samples) + "sample";
 
                 //make the directory
