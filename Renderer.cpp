@@ -466,7 +466,13 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         const double c = asin(1 / eta1);
         const double cosine_r = std::cos(theta_r);
         const double sine_r = std::sin(theta_r);
-        const double cosine_d = std::cos(theta_d);
+
+        double micro_variation = -2.0f / sqrt(1.0f - h * h);
+        double Np = A0 / (2.0f * micro_variation);
+        double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+        double bsdf_sum = Mp * Np * A0 / cos_d / cos_d;
+
+        Eigen::Vector3d BSDF = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color;
 
         const double r = randomMT() * (A0 + A1 + A2);
         if(r < A0){
