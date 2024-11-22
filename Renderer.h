@@ -17,6 +17,7 @@ struct RayHit {
     double t;
     double alpha;
     double beta;
+    double h;
     int mesh_idx; // < -1: no intersection, -1: area light, >= 0: object_mesh
     int primitive_idx; // < 0: no intersection
     bool isFront;
@@ -76,9 +77,10 @@ public:
     double blinnPhongSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double m, const int depth);
     double refractionSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, const Eigen::Vector3d &in_direction, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const double eta, const int depth);
     double marschnerSample(const Eigen::Vector3d &in_x, Ray &out_ray, const RayHit &rayHit, const Hair &in_Hair, const double theta, const double phi, const double c, const int depth, int p);
+    double marschnerSample(const Eigen::Vector3d &in_x, const Eigen::Vector3d &in_n, Ray &out_ray, const RayHit &rayHit, const Object &in_Object, const int depth);
 
-    double FrDielectric(double cosine, double etaI, double etaT) const;
-    double getTransmittance(double absorption, double h, double cosine_t) const;
+    double FrDielectric(double gamma, double etaI, double etaT) const;
+    double getTransmittance(double absorption, double h, double theta, double phi) const;
 };
 
 #endif //CGEXE_RENDERER_H

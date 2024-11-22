@@ -36,7 +36,7 @@ bool g_DrawFilm = true;
 
 std::vector<int> modes = {1};
 int mode_index = 0;
-unsigned int samples = 50000;
+unsigned int samples = 1e4;
 unsigned int nSamplesPerPixel = 100;
 bool save_flag = false;
 
