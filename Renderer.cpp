@@ -472,31 +472,42 @@ Eigen::Vector3d Renderer::computePathTrace(const Ray &in_Ray, const Object &in_O
         double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
         double bsdf_sum = Mp * Np * A0 / cos_d / cos_d;
 
-        Eigen::Vector3d BSDF = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color;
+        micro_variation = ((6.0 / __PI__) - 2.0) - (24.0 * c * phi_i * phi_i / __PI__ / __PI__ / __PI__) / sqrt(1.0f - h * h);
+        Np = A0 / (2.0f * micro_variation);
+        Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+        bsdf_sum += Mp * Np * A0 / cos_d / cos_d;
 
-        const double r = randomMT() * (A0 + A1 + A2);
-        if(r < A0){
-            //R mode
-            const double micro_variation = -2.0f / sqrt(1.0f - h * h);
-            const double Np = A0 / (2.0f * micro_variation);
-            const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+        micro_variation = ((12.0 / __PI__) - 2.0) - (48.0 * c * phi_i * phi_i / __PI__ / __PI__ / __PI__) / sqrt(1.0f - h * h);
+        Np = A0 / (2.0f * micro_variation);
+        Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+        bsdf_sum += Mp * Np * A0 / cos_d / cos_d;
 
-            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp * sine_r * cosine_r / (pdf * A0 * cosine_d * cosine_d);
-        }
-        else if(r < A0 + A1){
-            const double micro_variation = ((6.0 / __PI__) - 2.0) - (24.0 * c * phi_i * phi_i / __PI__ / __PI__ / __PI__) / sqrt(1.0f - h * h);
-            const double Np = A0 / (2.0f * micro_variation);
-            const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+        Eigen::Vector3d BSDF = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color * bsdf_sum;
+        I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(BSDF) * sine_r * cosine_r / pdf;
 
-            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp * sine_r * cosine_r / (pdf * A0 * cosine_d * cosine_d);
-        }
-        else{
-            const double micro_variation = ((12.0 / __PI__) - 2.0) - (48.0 * c * phi_i * phi_i / __PI__ / __PI__ / __PI__) / sqrt(1.0f - h * h);
-            const double Np = A0 / (2.0f * micro_variation);
-            const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
-
-            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp * sine_r * cosine_r / (pdf * A0 * cosine_d * cosine_d);
-        }
+//        const double r = randomMT() * (A0 + A1 + A2);
+//        if(r < A0){
+//            //R mode
+//            const double micro_variation = -2.0f / sqrt(1.0f - h * h);
+//            const double Np = A0 / (2.0f * micro_variation);
+//            const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+//
+//            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp * sine_r * cosine_r / (pdf * A0 * cosine_d * cosine_d);
+//        }
+//        else if(r < A0 + A1){
+//            const double micro_variation = ((6.0 / __PI__) - 2.0) - (24.0 * c * phi_i * phi_i / __PI__ / __PI__ / __PI__) / sqrt(1.0f - h * h);
+//            const double Np = A0 / (2.0f * micro_variation);
+//            const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+//
+//            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp * sine_r * cosine_r / (pdf * A0 * cosine_d * cosine_d);
+//        }
+//        else{
+//            const double micro_variation = ((12.0 / __PI__) - 2.0) - (48.0 * c * phi_i * phi_i / __PI__ / __PI__ / __PI__) / sqrt(1.0f - h * h);
+//            const double Np = A0 / (2.0f * micro_variation);
+//            const double Mp = in_Hair.hairs[in_RayHit.mesh_idx].hair_material.getMp(0, theta_h);
+//
+//            I += computePathTrace(new_ray, in_Object, in_AreaLights, in_Hair).cwiseProduct(in_Hair.hairs[in_RayHit.mesh_idx].hair_material.color) * Np * Mp * sine_r * cosine_r / (pdf * A0 * cosine_d * cosine_d);
+//        }
     }
     else {
         const Eigen::Vector3d n = computeRayHitNormal(in_Object, in_RayHit);
