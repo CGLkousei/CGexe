@@ -5,11 +5,18 @@
   3Dシーンはobjファイルにて読み込んでいるが、光源、カメラについてはmain.cpp内で記述されている。
 </p>
 
+<br>
+
 ## 前提知識
 ### レンダリングとは
-<p>CG分野におけるレンダリングとは3Dシーン、光源情報、カメラ情報を入力として2D画像を生成する処理のことを指す</p>
+<p>CG分野におけるレンダリングとは3Dシーン、光源情報、カメラ情報を入力として2D画像を生成する処理のことを指す。</p>
 
-![image](https://github.com/user-attachments/assets/f85ee09c-0a88-4c97-ab05-3b491db1e4d3)
+<br>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3e66ce3b-a197-46f9-9762-546c33d1bc4c"><br>
+  レンダリングのイメージ図
+</p>
+<br>
   
 ### レンダリング方程式
 <p>
@@ -58,13 +65,28 @@ $$\int_{\Omega}f(x)dx \approx \frac{1}{N}\sum_{i=1}^{N}\frac{f(X_i)}{f(X_i)}$$
   <p>
     光輸送アルゴリズムは先ほどのレンダリング方程式と組み合わせて用いる手法であり、KajiyaによってPath Tracingが提案された。
     現実世界では、光源から発せられた光が視点に入射することで、物体を視覚することができるが、光源から発せられた光の内、視点に入射するものはごくわずかであるため、Path Tracingでは視点側から光路を追跡していくことで放射輝度の計算を行う手法である。
+    </p>
+
+  <br>
+  <p align="center">
+    <img src="https://github.com/user-attachments/assets/c585c1e6-f93f-4b15-b208-93b66e20213d"><br>
+    Path Tracingによる光路生成イメージ
   </p>
+  <br>
+
 - Next Event Estimation
   <p>
     Path Tracingでは、視点側から物体を追跡していくため、小さい光源のシーンなどでは、視点と光源を結ぶ光路を生成することが難しく、計算効率が悪くなってしまう。
     そのため、物体との衝突ごとに、衝突点と光源を接続することで、視点側からでは中々光源につながらないようなシーンでも光路を生成することが可能となった。
     この手法をNext Event Estimation(NEE)と呼ぶ。
   </p>
+
+  <br>
+  <p align="center">
+    <img src="https://github.com/user-attachments/assets/a010264f-6710-4a1a-981e-361337862a55"><br>
+    NEEによる光路生成イメージ
+  </p>
+  <br>
 
 <br>
 <p>
@@ -73,8 +95,10 @@ $$\int_{\Omega}f(x)dx \approx \frac{1}{N}\sum_{i=1}^{N}\frac{f(X_i)}{f(X_i)}$$
 </p>
 
 ### 引用論文
-[1] [Kajiya1986] James T. Kajiya - "THE RENDERING EQUATION", 1986
+[1] [Kajiya1986] James T. Kajiya - "THE RENDERING EQUATION", 1986  
 [2] [Veach1998] Eric Veach, Leonidas J. Guibas - "ROBUST MONTE CARLO METHODS FOR LIGHT TRANSPORT SIMULATION", 1998
+
+<br>
 
 ## レンダリング画像
 パストレーシングと、多重重点的サンプリングを用いた手法で同一シーンをレンダリングした結果について示す。反射はLambertモデルと、Blinn Phongモデルを使用可能だが、下記の画像はすべてLambert反射を使用したものである。
