@@ -13,7 +13,7 @@
 
 <br>
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/3e66ce3b-a197-46f9-9762-546c33d1bc4c"><br>
+  <img src="https://github.com/user-attachments/assets/3e66ce3b-a197-46f9-9762-546c33d1bc4c" style="width: 70%;"><br>
   レンダリングのイメージ図
 </p>
 <br>
@@ -69,7 +69,7 @@ $$\int_{\Omega}f(x)dx \approx \frac{1}{N}\sum_{i=1}^{N}\frac{f(X_i)}{f(X_i)}$$
 
   <br>
   <p align="center">
-    <img src="https://github.com/user-attachments/assets/c585c1e6-f93f-4b15-b208-93b66e20213d"><br>
+    <img src="https://github.com/user-attachments/assets/c585c1e6-f93f-4b15-b208-93b66e20213d" style="width: 70%;"><br>
     Path Tracingによる光路生成イメージ
   </p>
   <br>
@@ -83,7 +83,7 @@ $$\int_{\Omega}f(x)dx \approx \frac{1}{N}\sum_{i=1}^{N}\frac{f(X_i)}{f(X_i)}$$
 
   <br>
   <p align="center">
-    <img src="https://github.com/user-attachments/assets/a010264f-6710-4a1a-981e-361337862a55"><br>
+    <img src="https://github.com/user-attachments/assets/a010264f-6710-4a1a-981e-361337862a55" style="width: 70%;"><br>
     NEEによる光路生成イメージ
   </p>
   <br>
@@ -105,13 +105,13 @@ $$\int_{\Omega}f(x)dx \approx \frac{1}{N}\sum_{i=1}^{N}\frac{f(X_i)}{f(X_i)}$$
 
 <br>
 <p align="center">
-  <img src="https://github.com/CGLkousei/basic_rendering/assets/147574806/b667192b-2ca9-4ed4-a178-4cca594215a2 "パストレーシングでのレンダリング""><br>
+  <img src="https://github.com/CGLkousei/basic_rendering/assets/147574806/b667192b-2ca9-4ed4-a178-4cca594215a2" style="width: 70%;"><br>
   Path Tracingを使用したレンダリング結果
 </p>
 <br>
 
 <p align="center">
-  <img src="https://github.com/CGLkousei/basic_rendering/assets/147574806/d512c4b3-550c-4279-a4b9-717455fc1353 "多重重点的サンプリングを用いたレンダリング""><br>
+  <img src="https://github.com/CGLkousei/basic_rendering/assets/147574806/d512c4b3-550c-4279-a4b9-717455fc1353" style="width: 70%;"><br>
   MISウエイトを用いてNEE, Path Tracingを組み合わせた結果
 </p>
 <br>
